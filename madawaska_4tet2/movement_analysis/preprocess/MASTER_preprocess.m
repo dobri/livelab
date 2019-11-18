@@ -1,4 +1,4 @@
-plotting_video_flag = 0;;
+plotting_video_flag = 0;
 plotting_flag = 0;
 data_folder = 'D:\str4tet_madawaska\Data';
 %cd(data_folder)
