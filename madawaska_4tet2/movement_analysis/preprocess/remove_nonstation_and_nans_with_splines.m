@@ -71,6 +71,7 @@ for pp=1:size(D,3)
             plot(t_prim_plotting,fitted)
             hold on
             plot(t,x_stationary(:,d),'--')
+            % Here we show the nans.
             plot(t,isnan(D(:,d,pp))*2e2)
             hold off
             ylabel([char(87+d) ', mm'])

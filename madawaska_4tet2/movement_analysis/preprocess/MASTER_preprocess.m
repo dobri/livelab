@@ -1,6 +1,6 @@
 %% Where's my data?
 plotting_video_flag = 0;
-plotting_flag = 0;
+plotting_flag = 1;
 data_folder = input('Type the path to your .tsv data files, i.e. ''D:\\str4tet_madawaska\\Data\''>>' );
 fprintf('%s\n',['We''ll be looking inside ' data_folder])
 filenames = dir(fullfile(data_folder,'*.tsv'));
