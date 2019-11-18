@@ -1,15 +1,14 @@
-function out = import_tsv_from_qtm_to_matlab(varargin)
-if isempty(varargin{1})
-    filename = 'piece1_solo1.tsv';
-else
-    filename = varargin{1};
+function out = import_tsv_from_qtm_to_matlab(filename)
+%import_tsv_from_qtm_to_matlab(filename)
+% This is supposed to be generic, but in practice there are always some
+% subtle differences in how QTM exports its data files to a .tsv, so this
+% script has to be edited for the given project.
+
+if isempty(filename)
+    'What am I supposed to do without input?';
+    out = [];
+    return
 end
-if isempty(varargin{2})
-    plotting_video_flag = 1;
-else
-    plotting_video_flag = varargin{2};
-end
-%cd(data_folder)
 
 
 delimiter = '\t';
@@ -50,33 +49,6 @@ X=reshape(dataArray{1},nchannels*3,nrows)';
 X=reshape(X,[],3,nchannels);
 clear dataArray
 
-
-%% Video-like plotting.
-if plotting_video_flag == 1
-    x1=squeeze(X(1,1,:));
-    y1=squeeze(X(1,2,:));
-    z1=squeeze(X(1,3,:));
-    p = plot3(x1,y1,z1,'ko','MarkerSize',5,'MarkerFaceColor','r');
-    %p.XDataSource = 'x1';
-    %p.YDataSource = 'y1';
-    %p.ZDataSource = 'z1';
-    grid on
-    xlim([-1000 3000])
-    ylim([-0 3200])
-    zlim([  500 1500])
-    set(gca,'view',[-13 74])
-    for t=2:size(X,1)
-        x1=squeeze(X(t,1,:));
-        y1=squeeze(X(t,2,:));
-        z1=squeeze(X(t,3,:));
-        %refreshdata
-        set(p,'XData',x1)
-        set(p,'YData',y1)
-        set(p,'ZData',z1)
-        drawnow
-        pause(1/sf)%pause
-    end
-end
 
 out.filename = filename.name;
 out.col_names = col_names;
