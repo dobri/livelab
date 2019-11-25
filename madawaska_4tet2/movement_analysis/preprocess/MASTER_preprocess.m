@@ -14,6 +14,21 @@ for tr = 1:numel(filenames)
 end
 
 
+%% Should we rotate the bodies so that the AP and ML axes correspond to Y 
+% and X axes in the data frame, respectively?
+target_vector = [-1 0];
+dims = [1 2];
+reference_markers = {'backl','backr'};
+bodies_labels = {'violin1','violin2','viola','cello'};
+for tr = 1:numel(filenames)
+    fprintf('%s\n',filenames(tr).name)
+    DATA{tr} = rotate_to_target_vector(DATA{tr},target_vector,dims,bodies_labels,reference_markers);
+    pause
+end
+
+
+
+
 %% Get proportion of NaNs for each participant and marker.
 % Trials are cells, markers are columns.
 for tr = 1:numel(DATA)
@@ -36,7 +51,7 @@ wanted_head_markers{4} = {'cellohat0','cellohat1','cellohat2','cellohat3'};
 for tr = 1:numel(DATA)
     for body = 1:4
         for marker = 1:numel(wanted_head_markers{body})
-            for m = 1:numel(DATA{tr}.col_names) 
+            for m = 1:numel(DATA{tr}.col_names)
                 if strcmp(DATA{tr}.col_names{m},wanted_head_markers{body}{marker})
                     plot(body*10+marker,DATA{tr}.missing_prop(m),'s');
                     fprintf('%6.3f,',DATA{tr}.missing_prop(m))
@@ -72,9 +87,9 @@ for tr = 1:numel(DATA)
     % De-trend, de-nan, de-artefact.
     % Fill gaps by linearly interpolating, good enough for small gaps.
     DATA{tr}.X_detrended = zeros(size(DATA{tr}.X,1),size(DATA{tr}.X,2),size(DATA{tr}.X,3));
-    DATA{tr}.The_trend = nan(size(DATA{tr}.X,1),size(DATA{tr}.X,2),size(DATA{tr}.X,3));
+    DATA{tr}.the_Trend = nan(size(DATA{tr}.X,1),size(DATA{tr}.X,2),size(DATA{tr}.X,3));
     for marker=1:size(DATA{tr}.X,3)
-        [DATA{tr}.X_detrended(:,:,marker), DATA{tr}.The_trend(:,:,marker)] = remove_nonstation_and_nans_with_splines(DATA{tr}.X(:,:,marker),DATA{tr}.sf,(1:size(DATA{tr}.X,1))'./DATA{tr}.sf,[],[],plotting_flag);
+        [DATA{tr}.X_detrended(:,:,marker), DATA{tr}.the_Trend(:,:,marker)] = remove_nonstation_and_nans_with_splines(DATA{tr}.X(:,:,marker),DATA{tr}.sf,(1:size(DATA{tr}.X,1))'./DATA{tr}.sf,[],[],plotting_flag);
         if plotting_flag == 1
             text(.45,-.3,[DATA{tr}.filename(~(double(DATA{tr}.filename)==95)) ' - ' DATA{tr}.col_names{marker}],'units','normalized')
             pause
@@ -83,6 +98,8 @@ for tr = 1:numel(DATA)
 end
 
 
-%% What other movement variables with reduced dimension should we think of?
-% Just the AP sway (front-back).
-% PCA? MSD? The thing from quaternions?
+%% What movement variables with reduced dimension should we use?
+% v AP sway (front-back). (Y-axis in the rotated data).
+% x PCA? (Probably not necessary here to fine-tune beyond ML and AP.)
+% -> MSD or velocity (Do that!)
+% x The thing from quaternions? (No time for that.)
