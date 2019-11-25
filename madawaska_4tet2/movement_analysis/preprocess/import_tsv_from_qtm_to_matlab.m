@@ -51,6 +51,6 @@ clear dataArray
 
 
 out.filename = filename.name;
-out.col_names = col_names;
+out.col_names = col_names';
 out.X = X;
 out.sf = sf;
