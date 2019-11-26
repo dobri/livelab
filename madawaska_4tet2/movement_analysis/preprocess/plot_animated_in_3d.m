@@ -1,12 +1,16 @@
-function plot_animated_in_3d(DATA)
-%plot_animated_in_3d(DATA)
+function plot_animated_in_3d(X,varargin)
+%plot_animated_in_3d(X,sf)
 % Video-like plotting.
+% X is time by dim by marker.
 % Use to quickly get a feel for the data.
 % Make sure the ranges are right.
 % You can further edit this to make a decent-looking video file.
 
-X = DATA.X;
-sf = DATA.sf;
+if isempty(varargin)
+    sf = 100;
+else
+    sf = varargin{1};
+end
 
 x1=squeeze(X(1,1,:));
 y1=squeeze(X(1,2,:));

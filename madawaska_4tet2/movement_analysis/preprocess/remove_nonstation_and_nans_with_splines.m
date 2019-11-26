@@ -81,7 +81,7 @@ for pp=1:size(D,3)
         end
     end
     D_detrended(:,:,pp) = x_stationary;
-    try The_trend(:,:,pp) = the_trend;catch me;keyboard;end
+    The_trend(:,:,pp) = the_trend;
     
     % Plot each dimension against time for each marker. Rarely useful.
     if plotting_flag == 2

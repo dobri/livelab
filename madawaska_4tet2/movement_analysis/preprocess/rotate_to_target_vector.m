@@ -25,31 +25,43 @@ for b = 1:numel(bodies)
     X = DATA.X(:,dims,marker_index);
     
     % Find the local vector A->B frame by frame.
-    local_vector = zeros(size(X,1),numel(dims));
-    for k = 1:size(X,1)
-        local_vector(k,:) = X(k,:,2)-X(k,:,1);
-    end
+    local_vectorAB_vec = X(:,:,2)-X(:,:,1);
+    local_vectorAB = nanmean(local_vectorAB_vec);
     
     % Then the angle from the target vector.
+    % Careful with trig functions in different quadrants!
+    if local_vectorAB(2)>0
+        the_angle = -acos(dot(local_vectorAB,target_vector)/...
+            (norm(local_vectorAB)*norm(target_vector)));
+    else
+        the_angle = acos(dot(local_vectorAB,target_vector)/...
+            (norm(local_vectorAB)*norm(target_vector)));
+    end
+    
+    % For verification, also get a time series of angles.
     angles_vec = zeros(size(X,1),1);
-    Rz = zeros(3,3);
     for k = 1:size(X,1)
-        if local_vector(k,2)>0
-            angles_vec(k) = -acos(dot(local_vector(k,:),target_vector)/...
-                (norm(local_vector(k,:))*norm(target_vector)));
+        if local_vectorAB_vec(k,2)>0
+            angles_vec(k) = -acos(dot(local_vectorAB_vec(k,:),target_vector)/...
+                (norm(local_vectorAB_vec(k,:))*norm(target_vector)));
         else
-            angles_vec(k) = acos(dot(local_vector(k,:),target_vector)/...
-                (norm(local_vector(k,:))*norm(target_vector)));
+            angles_vec(k) = acos(dot(local_vectorAB_vec(k,:),target_vector)/...
+                (norm(local_vectorAB_vec(k,:))*norm(target_vector)));
         end
+        % What to average? Ave the angles or vector and then compute one Rz
+        % or many Rz and average them?
         %Rz(:,:,k) = [cos(-angles_vec(k)) -sin(-angles_vec(k)) 0; sin(-angles_vec(k)) cos(-angles_vec(k)) 0;0 0 1];
     end
-    % Define the rotation matrix. Assume we're rotation about Z.
-    Rz = [cos(nanmean(-angles_vec)) -sin(nanmean(-angles_vec)) 0; sin(nanmean(-angles_vec)) cos(nanmean(-angles_vec)) 0;0 0 1];
-    % Check that the angle makes sense.
-    % Very roughly the angles should be somewhere around 60, 30, -60, -80 
-    % for violin1, 2, viola, and cello, respectively.
+    
+    % Check that the angle makes sense. Very very roughly the angles t.s.
+    % should be somewhere around 60, 30, -60, -80 for v1, v2, viola, and cello, respectively.
     subplot(numel(bodies),1,b)
     plot(angles_vec/2/pi*360)
+
+    % Define the rotation matrix. Assume we're rotating about Z.
+    Rz = [cos(-the_angle) -sin(-the_angle) 0;
+        sin(-the_angle) cos(-the_angle) 0;
+        0 0 1];
     
     % Now get ready to rotate. 
     % First, find the indices of the markers that belong to the given body.
@@ -73,6 +85,8 @@ for b = 1:numel(bodies)
     end
     % Un-zero-center the body.
     X = X+center_vec;
+    
+    % Plug the rotated markers back in the data struct.
     DATA.X(:,:,markers_ind_per_body) = X;
 end
 
