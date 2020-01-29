@@ -1,4 +1,4 @@
-clear
+clear 
 
 %% Where's my data?
 plotting_video_flag = 0;
