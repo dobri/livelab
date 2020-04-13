@@ -117,7 +117,16 @@ for tri=1:ntrials
     M(:,:,tri)=AP(:,1:minVal);
 end
 
-% Save my matrix and updated DATA
+%% Plot the matrix to make sure it looks ok
+
+for i=1:size(M,3) %loop through all 8 trials
+    for j=1:size(M,1) % loop through all 4 musicians
+        plot(M(j,:,i))
+        pause
+    end
+end
+
+%% Save my matrix and updated DATA
 save('M.mat','M')
 save('DATA.mat','DATA')
 
