@@ -14,6 +14,11 @@ subplot(4,1,1)
 plot(tvec,x,tvec,y)
 
 [c,l,t]=corrgram(x,y,round(sr*1),round(sr*5),round(sr*5*.5));
+% Or set maxlag based on some externally determined parameter.
+% gc_model_order = 1.75; % seconds
+% Also, set it to a single window.
+% [c,l,t]=corrgram(x,y,round(sr*gc_model_order),numel(x),0);
+
 subplot(4,1,2)
 imagesc(t./sr,l./sr,c,[-1 1])
 xlabel('Time'), ylabel('Lag, s'), axis xy;
