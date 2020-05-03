@@ -1,7 +1,9 @@
 %% mvgc_madawaska
 % 
 % This script completes a granger-causality analysis of the Madawaska data
-% To use it, load in the matrix M from the script 'prepare_data_for_mvgc.m'
+% To use it, load in the matrix M from the MASTER_preprocess.m script 
+
+% Before starting, make sure the MVGC toolbox is added to your path
 
 %% Parameters
 
@@ -49,7 +51,7 @@ for triali=1:size(X,3)
     % Plot information criteria.
 
     %figure(1); clf;
-    %plot_tsdata([AIC BIC]',{'AIC','BIC'},1/fs);
+    %plot_tsdata([AIC]',{'AIC'},1/fs);
     %title('Model order estimation');
     %pause
     
@@ -61,11 +63,6 @@ morder=max(moAIC_matrix);
 %% VAR model estimation (<mvgc_schema.html#3 |A2|>)
 
 % Preallocate some vectors
-
-%A_matrix=zeros(momax,ntrials);
-%SIG_matrix=zeros(1,ntrials);
-%G_matrix
-%info_matrix
 
 GC_data=zeros(nvars,nvars,ntrials);
 pval_data=zeros(nvars,nvars,ntrials);
@@ -134,57 +131,29 @@ for triali=1:size(X,3)
 end
 
 
-odd_trials=GC_data(:,:,[1,3,5,7]);
-odd_pvals=pval_data(:,:,[1,3,5,7]);
-odd_sig=sig_data(:,:,[1,3,5,7]);
-odd_cd=cd_data(1,[1,3,5,7]);
-
-
-    figure(1); clf;
-    subplot(1,3,1);
-    plot_pw(mean(odd_trials, 3));
-    title('Pairwise-conditional GC');
-    subplot(1,3,2);
-    plot_pw(mean(odd_pvals,3));
-    title('p-values');
-    subplot(1,3,3);
-    plot_pw(mean(odd_sig,3));
-    title(['Significant at p = ' num2str(alpha)])
-
-
-even_trials=GC_data(:,:,[2,4,6,8]);
-even_pvals=pval_data(:,:,[2,4,6,8]);
-even_sig=sig_data(:,:,[2,4,6,8]);
-even_cd=cd_data(1,[2,4,6,8]);
-
-
-    figure(2); clf;
-    subplot(1,3,1);
-    plot_pw(mean(even_trials, 3));
-    title('Pairwise-conditional GC');
-    subplot(1,3,2);
-    plot_pw(mean(even_pvals,3));
-    title('p-values');
-    subplot(1,3,3);
-    plot_pw(mean(even_sig,3));
-    title(['Significant at p = ' num2str(alpha)])
-
-
 %% Save data
 
-% Make a vector to correspond to odd or even trials
+% Make a vector to correspond to mechanical and expressive trials
 
 condition = [1;2;1;2;1;2;1;2];
 trial=[1;2;3;4;5;6;7;8];
 
-% Make table
+% Make table of cd data and save
 
 T=table(cd_data',trial, condition);
 
 % Save data
-filename='madawaska.xlsx';
-writetable(T,filename);
+filename='mada_cd.xlsx';
+writetable(T,filename); 
 
+% Make table of the raw gc scores for each pair and save
+GC_data_reconfig=[GC_data(:,:,1);GC_data(:,:,2);GC_data(:,:,3);GC_data(:,:,4);...
+    GC_data(:,:,5);GC_data(:,:,6);GC_data(:,:,7);GC_data(:,:,8)];
+condition=[1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,2,1,1,1,1,2,2,2,2]';
+trial=[1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7,8,8,8,8]';
+T2=table(GC_data_reconfig, condition, trial);
+filename='mada_gc.xlsx';
+writetable(T2,filename);
 
 
 

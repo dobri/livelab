@@ -1,5 +1,9 @@
-%% prepare_data_for_mvgc.m
-% This script contains several preprocessing steps for the madawaska data
+function DATA = prepare_data_for_mvgc(DATA, headMark, plotting_flag)
+
+% This function contains several preprocessing steps for the madawaska data
+% The input DATA is all the ensemble data for the madawaska quartet
+% The input headMark is a cell list of all the markers we want to analyze
+% If you want to plot everything, set plotting_flag=1. If not, set it to 0.
 
 % First, I extract the head markers we are interested in (i.e. the four 
 % head markers from each musician in the quartet)
@@ -18,26 +22,18 @@
 
 % written by Emily W, April 2020
 
-%% Script starts here
-% load DATA that Dobri sent me (from the MASTER_preprocess.m script), but
-% only the 8 ensemble trials (cut out the solo data)
+%% Function starts here
 
-%load(DATA.mat)
-
-% specify the names of the markers I want!
-headMark = {'cellohat0','cellohat1','cellohat2','cellohat3','violahat0','violahat1','violahat2','violahat3',...
-    'violin1hat0','violin1hat1','violin1hat2','violin1hat3','violin2hat0','violin2hat1','violin2hat2','violin2hat3'};
-
-% now loop through all 8 trials
+% loop through all trials
 for triali=1:length(DATA)
     
     % take out the data
-    sf=DATA{triali}.sf;
-    recordedLength = (length(DATA{triali}.X))/sf; % length of data (in seconds)
-    dataTraj = DATA{triali}.X; % take out the data
+    sf=DATA{triali}.sf; %sampling rate
+    %recordedLength = (length(DATA{triali}.X))/sf; % length of data (in seconds)
+    dataTraj = DATA{triali}.X; % take out the actual data
     markLabels = DATA{triali}.col_names;
 
-    % select only the head markers
+    % select only the head markers we want
     markInd=zeros(1,length(headMark));
     for n = 1:length(headMark) % find the 16 head markers
         markInd(n) = find(strcmp(markLabels, headMark{n}));
@@ -64,18 +60,19 @@ for triali=1:length(DATA)
     
     % optional plotting for verifying the downsampling
     % take just one dimension
-    dataTraj_ds_v=dataTraj_ds(:,1,1);
-    dataTraj_v=dataTraj(:,1,1);
+    if plotting_flag==1
+        dataTraj_ds_v=dataTraj_ds(:,1,1);
+        dataTraj_v=dataTraj(:,1,1);
 
-    sr=1/mean(diff(timePoints_ds)); % Your actual sr at the end.
-    plot(timePoints,dataTraj_v)
-    hold on
-    plot(timePoints_ds,dataTraj_ds_v,'-or')
-    hold off
+         sr=1/mean(diff(timePoints_ds)); % Your actual sr at the end.
+         plot(timePoints,dataTraj_v)
+         hold on
+         plot(timePoints_ds,dataTraj_ds_v,'-or')
+         hold off
+    end
     
     % convert the data to z-scores
     dataTraj_z = zscore(dataTraj_ds);
-    DATA{triali}.Z=dataTraj_z;
 
     % take average of the 4 head markers for each musician
     data_cello = mean(dataTraj_z(:,:,1:4),3);
@@ -84,51 +81,10 @@ for triali=1:length(DATA)
     data_violin2 = mean(dataTraj_z(:,:,13:16),3);
     
     dataTraj_avg=cat(3,data_cello,data_viola,data_violin1,data_violin2);
-    DATA{triali}.AVG=dataTraj_avg;
 
     % now take out just the anterior-posterior body sway
     dataTraj_AP=dataTraj_avg(:,2,:);
     DATA{triali}.AP=dataTraj_AP;
 
 end
-
-%% Create a matrix for MVGC
-
-% now I need a matrix to take over to MVGC toolbox!
-
-% first, let's see how long each trial is
-trialLengths=zeros(1,length(DATA));
-for i=1:length(DATA)
-    trialLengths(1,i)=length(DATA{i}.AP);
-end
-
-minVal=min(trialLengths);
-% ok I'm going to cap all of them at minVal (2513) because that's the shortest
-
-% now create the matrix M for MVGC
-nvars=size(DATA{1}.AP,3);
-nobs=minVal;
-ntrials=length(DATA);
-
-M=zeros(nvars,nobs,ntrials);
-
-for tri=1:ntrials
-    AP=permute(DATA{tri}.AP,[3,1,2]);
-    M(:,:,tri)=AP(:,1:minVal);
-end
-
-%% Plot the matrix to make sure it looks ok
-
-for i=1:size(M,3) %loop through all 8 trials
-    for j=1:size(M,1) % loop through all 4 musicians
-        plot(M(j,:,i))
-        pause
-    end
-end
-
-%% Save my matrix and updated DATA
-save('M.mat','M')
-save('DATA.mat','DATA')
-
-
 
