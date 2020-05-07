@@ -1,6 +1,8 @@
-function DATA = rotate_to_target_vector(DATA,target_vector,dims,bodies,reference_markers)
+function DATA = rotate_to_target_vector(DATA,target_vector,dims,bodies,reference_markers,plotting)
 
-clf
+if plotting == 1
+    clf
+end
 % Do this separately for each body.
 for b = 1:numel(bodies)
     % Find the indices of the needed markers.
@@ -55,9 +57,11 @@ for b = 1:numel(bodies)
     
     % Check that the angle makes sense. Very very roughly the angles t.s.
     % should be somewhere around 60, 30, -60, -80 for v1, v2, viola, and cello, respectively.
-    subplot(numel(bodies),1,b)
-    plot(angles_vec/2/pi*360)
-
+    if plotting == 1
+        subplot(numel(bodies),1,b)
+        plot(angles_vec/2/pi*360)
+    end
+    
     % Define the rotation matrix. Assume we're rotating about Z.
     Rz = [cos(-the_angle) -sin(-the_angle) 0;
         sin(-the_angle) cos(-the_angle) 0;

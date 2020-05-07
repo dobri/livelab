@@ -1,17 +1,23 @@
 clear
 
 %% Where's my data?
-plotting_video_flag = 0;
-plotting_flag = 1;
-data_folder = '/Users/emilywood/Desktop/MATLAB/trainorlab/madawaska_4tet/data/ensemble';
+plotting_flag = 0;
+if strcmp(computer,'GLNXA64')
+    data_folder = input('Where is my fokin money? ');
+else
+    data_folder = '/Users/emilywood/Desktop/MATLAB/trainorlab/madawaska_4tet/data/ensemble';
+end
 filenames = dir(fullfile(data_folder,'*.tsv'));
 
 
 %% Import the QTM data saved as text files.
 for tr = 1:numel(filenames)
     filename = filenames(tr); %filename = 'piece1_solo1.tsv'
-    filename=filename.name;
-    %fprintf('%s\n',filename.name)
+    fprintf('%s\n',filename.name)
+    % Why? This works on a Mac?
+    if ~strcmp(computer,'GLNXA64')
+        filename=filename.name;
+    end
     DATA{tr} = import_tsv_from_qtm_to_matlab(filename);
 end
 bodies_labels = {'violin1','violin2','viola','cello'};
@@ -24,8 +30,8 @@ dims = [1 2];
 reference_markers = {'backl','backr'};
 for tr = 1:numel(filenames)
     fprintf('%s\n',filenames(tr).name)
-    DATA{tr} = rotate_to_target_vector(DATA{tr},target_vector,dims,bodies_labels,reference_markers);
-    pause
+    DATA{tr} = rotate_to_target_vector(DATA{tr},target_vector,dims,bodies_labels,reference_markers,plotting_flag);
+    if plotting_flag==1;pause;end
 end
 
 %% Get proportion of NaNs for each participant and marker.
@@ -39,39 +45,49 @@ end
 % What to do with nan gaps? Decide depending on how broken is the data, 
 % fill the nan parts or cut them out, or the whole marker?
 
+
 %% Show the amount of missing data using figures and printing to screen.
 % Let's first focus on head sway as a proxy for upper body gross movement.
 wanted_head_markers = {'hat0','hat1','hat2','hat3'};
-for tr = 1:numel(DATA)
-    for body = 1:4
-        for marker = 1:numel(wanted_head_markers)
-            for m = 1:numel(DATA{tr}.col_names)
-                if strcmp(DATA{tr}.col_names{m},[bodies_labels{body} wanted_head_markers{marker}])
-                    plot(body*10+marker,DATA{tr}.missing_prop(m),'s');
-                    fprintf('%6.3f,',DATA{tr}.missing_prop(m))
-                    text(body*10+marker,.1,DATA{tr}.col_names{m},'Rotation',90)
-                    hold on
+if plotting_flag == 1
+    for tr = 1:numel(DATA)
+        for body = 1:4
+            for marker = 1:numel(wanted_head_markers)
+                for m = 1:numel(DATA{tr}.col_names)
+                    if strcmp(DATA{tr}.col_names{m},[bodies_labels{body} wanted_head_markers{marker}])
+                        plot(body*10+marker,DATA{tr}.missing_prop(m),'s');
+                        fprintf('%6.3f,',DATA{tr}.missing_prop(m))
+                        text(body*10+marker,.1,DATA{tr}.col_names{m},'Rotation',90)
+                        hold on
+                    end
                 end
             end
         end
+        fprintf('\n')
+        set(gca,'XTick',[])
+        hold off
+        ylim([0 1])
+        pause
     end
-    fprintf('\n')
-    set(gca,'XTick',[])
-    hold off
-    ylim([0 1])
-    pause
 end
 % It seems that head markers were perfectly recorded, at least for piece1.
 % We still have to verify that's the case for piece2.
 
 
 %% To confirm the data looks OK set the flag to 1 and run an animated plot.
-for tr = 1:numel(DATA)
-    fprintf('%s\n',filenames(tr).name)
-    if plotting_video_flag == 1
-        plot_animated_in_3d(DATA{tr})
+plotting_video_flag = 0;
+if plotting_video_flag == 1
+    for tr = 1:numel(DATA)
+        fprintf('%s\n',filenames(tr).name)
+        plot_animated_in_3d(DATA{tr}.X)
     end
 end
+
+
+%% Nicely looking 3D multi-trial, multi-body video.
+wanted_head_markers_all = {'hat0','scroll1','backl','spine1','backr','elbowl','wristl','handl','elbowr','wristr','handr','bow1','bow2','boutr','boutl'};
+% plot_4x8_animated_in_3d(DATA,bodies_labels,wanted_head_markers_all,100);
+
 
 %% Here we do cleaning, nan-filling, detrending, zero-center, etc..
 % The time series should look reasonably stationary from here on.
