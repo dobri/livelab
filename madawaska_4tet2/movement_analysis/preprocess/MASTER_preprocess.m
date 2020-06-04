@@ -7,7 +7,7 @@ if strcmp(computer,'GLNXA64')
 else
     data_folder = '/Users/emilywood/Desktop/MATLAB/trainorlab/madawaska_4tet/data/ensemble';
 end
-filenames = dir(fullfile(data_folder,'*.tsv'));
+filenames = dir(fullfile(data_folder,'piece1*.tsv'));
 
 
 %% Import the QTM data saved as text files.
