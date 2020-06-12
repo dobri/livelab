@@ -21,7 +21,7 @@ for tr = 1:8
     data{tr}(:,:,censure)=[];
 end
 
-[b,a] = butter(2,.3/50,'high');
+%[b,a] = butter(2,.3/50,'high');
 for tr=1:8
     for lv=1:2
         for pp=1:33
@@ -29,6 +29,7 @@ for tr=1:8
             data{tr}(data{tr}(:,lv,pp)==-inf,lv,pp)=0;
             data{tr}(data{tr}(:,lv,pp)==inf,lv,pp)=0;
             data{tr}(isnan(data{tr}(:,lv,pp)),lv,pp)=0;
+            %data{tr}(:,lv,pp) = zscore(data{tr}(:,lv,pp));
             %data{tr}(:,lv,pp) = filtfilt(b,a,data{tr}(:,lv,pp));
             %data{trial}(:,lv,pp)=smooth(data{trial}(:,lv,pp),10);
         end
