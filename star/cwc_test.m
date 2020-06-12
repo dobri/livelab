@@ -1,7 +1,7 @@
 function [sig_perc_wtc,mean_rsq,sig_perc_wxy,mean_wxy] = cwc_test(d1,d2,plotting,save_fig2_fname,save_fig3_fname)
 
 maxscale = 16;
-mc_surr_num = 1000;
+mc_surr_num = 0;
 seriesname={'PP_j' 'PP_i'};
 
 tlim=[min(d1(1,1),d2(1,1)) max(d1(end,1),d2(end,1))];

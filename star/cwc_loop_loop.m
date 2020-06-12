@@ -6,6 +6,7 @@ switch 4
         CC = WTCS;
     case 2
         CC = R;
+        %CC = mean(CC,4);
     case 3
         CC = XWTS;
         %CC = mean(XWTS,4);
@@ -20,6 +21,7 @@ end
 
 close all
 
+
 for lv=1:size(CC,4)
     figure(1)
     for tr=1:8
@@ -28,7 +30,8 @@ for lv=1:size(CC,4)
     end
     colormap hot
 end
-pause(.1)
+pause(.2)
+
 
 CClong = [];
 for lv=1:size(CC,4)
@@ -47,7 +50,8 @@ for lv=1:size(CC,4)
     subplot(1,2,lv)
     boxplot(CClong(CClong(:,3)==lv,1),CClong(CClong(:,3)==lv,2))
 end
-pause(.1)
+pause(.2)
+
 
 cm = CM(DistMat>0);
 dm = DistMat(DistMat>0);
@@ -68,7 +72,7 @@ for lv=1:size(CC,4)
         text(.1,.25,num2str([b',r,p,p<(.05/8)]','%10.4f'),'unit','normalized','fontsize',16)
     end
 end
-pause(.1)
+pause(.2)
 
 for lv=1:size(CC,4)
     figure(4)
@@ -82,5 +86,25 @@ for lv=1:size(CC,4)
         ylim([0 1])
     end
 end
-pause(.1)
+pause(.2)
 
+
+for lv=1:size(CC,4)
+    for tr=1:4
+        cc1 = reshape(CC(:,:,tr  ,lv),[],1);
+        cc1 = cc1(~isnan(cc1));
+        cc2 = reshape(CC(:,:,tr+4,1),[],1);
+        cc2 = cc2(~isnan(cc2));
+        
+        figure(5)
+        subplot(2,4,tr + (lv-1)*4)
+        [c,n] = hist(cc1);plot(n,c);hold on
+        [c,n] = hist(cc2);plot(n,c);hold off
+        [h,p,~,stats] = ttest(cc1,cc2);
+        disp([stats.tstat stats.df p])
+        
+    end
+    figure(6)
+    subplot(1,2,lv)
+    boxplot(CClong(CClong(:,3)==lv,1),CClong(CClong(:,3)==lv,2))
+end

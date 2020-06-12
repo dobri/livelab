@@ -2,8 +2,8 @@ function [CC1,RR,CC2,WW] = cwc_loop(t,data,censure)
 
 ds=4;
 
-plotting = 2;
-saving = 1;
+plotting = 0;
+saving = 0;
 
 rows = meshgrid(1:33,1:33)';
 cols = meshgrid(1:33,1:33);
