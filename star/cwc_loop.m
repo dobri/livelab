@@ -49,10 +49,16 @@ for lv=1:2
         parfor st=1:33^2
             row=source_target_pairs1(st);
             col=source_target_pairs2(st);
+
+            % To make figs of selected pps.
+            %if ~((row==8 && col==3) || (row==7 && col==6))
+            %    continue
+            %end
+
             if row>col
                 if saving == 1
-                    pic_name2 = ['~/cwc_pics/wtc_pps-' num2str(row,'%02.f') '-' num2str(col,'%02.f') '_tr' num2str(tr,'%02.f') '_lv' num2str(lv,'%02.f')];
-                    pic_name3 = ['~/cwc_pics/xwt_pps-' num2str(row,'%02.f') '-' num2str(col,'%02.f') '_tr' num2str(tr,'%02.f') '_lv' num2str(lv,'%02.f')];
+                    pic_name2 = ['~/cwc_pics/xwt_pps-' num2str(row,'%02.f') '-' num2str(col,'%02.f') '_tr' num2str(tr,'%02.f') '_lv' num2str(lv,'%02.f')];
+                    pic_name3 = ['~/cwc_pics/wtc_pps-' num2str(row,'%02.f') '-' num2str(col,'%02.f') '_tr' num2str(tr,'%02.f') '_lv' num2str(lv,'%02.f')];
                 else
                     pic_name2 = [];
                     pic_name3 = [];

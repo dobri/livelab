@@ -1,6 +1,8 @@
 function [sig_perc_wtc,mean_rsq,sig_perc_wxy,mean_wxy] = cwc_test(d1,d2,plotting,save_fig2_fname,save_fig3_fname)
 
-maxscale = 16;
+fsz = 30;
+dpi = 100;
+maxscale = 8;
 mc_surr_num = 0;
 seriesname={'PP_j' 'PP_i'};
 
@@ -8,7 +10,7 @@ tlim=[min(d1(1,1),d2(1,1)) max(d1(end,1),d2(end,1))];
 
 if plotting==1
     figure(1)
-    set(gcf,'color',[.5 1 .4])
+    set(gcf, 'Color', [1 1 1]) %set(gcf,'color',[.5 1 .4])
     subplot(2,1,1);
     wt(d1,'Dj',1/4,'S0',.25,'MaxScale',64,'Mother','morlet','MakeFigure',logical(plotting==1));
     title(seriesname{1});
@@ -21,7 +23,7 @@ end
 
 if plotting==1
     figure(2)
-    set(gcf,'color',[.5 .4 1])
+    set(gcf, 'Color', [1 1 1]) %set(gcf,'color',[.5 .4 1])
 end
 
 
@@ -29,19 +31,24 @@ end
 if plotting>0
     if ~isempty(save_fig2_fname)
         figure('Visible', 'off')
-        set(gcf, 'Position', [1, 1, 100*4, 100*3])
+        set(gcf, 'Position', [1, 1, dpi*4, dpi*3])
         set(gcf, 'InvertHardcopy', 'off')
     else
         figure(2)
         set(gcf, 'Position', [1+600, 1+400, 300*4, 300*3])
     end
-    set(gcf, 'Color', [.4 1 .5])
+    set(gcf, 'Color', [1 1 1]) %set(gcf, 'Color', [.4 1 .5])
     
     subplot(6,1,5)
     plot(d1(:,1),d1(:,2),'-k','linewidth',2)
+    set(gca,'xlim',tlim)
+    set(gca,'fontsize',fsz)
+    
     subplot(6,1,6)
     plot(d2(:,1),d2(:,2),'-k','linewidth',2)
     xlabel('Time, s')
+    set(gca,'xlim',tlim)
+    set(gca,'fontsize',fsz)
     
     subplot(6,1,1:4)
 end
@@ -50,6 +57,9 @@ end
     'Dj',1/4,'S0',.25,'MaxScale',maxscale,'Mother','morlet',...
     'MakeFigure',logical(plotting>0));
 if plotting>0
+    f=gcf;
+    f.Children(1).Position(1)=.8969;
+    set(gca,'fontsize',fsz)
     if ~isempty(save_fig3_fname)
         print('-djpeg','-r100',[save_fig2_fname '_' datestr(now,'yyyy-mm-dd-HHMMSS') '.jpeg'])
         close all
@@ -74,18 +84,23 @@ sig_perc_wxy = sum(sum((sig95.*logical(COI))>1))./sum(sum(COI));
 if plotting>0
     if ~isempty(save_fig3_fname)
         figure('Visible', 'off')
-        set(gcf, 'Position', [1, 1, 100*4, 100*3])
+        set(gcf, 'Position', [1, 1, dpi*4, dpi*3])
         set(gcf, 'InvertHardcopy', 'off')
     else
         figure(3)
         set(gcf, 'Position', [1, 1, 300*4, 300*3])
     end
-    set(gcf, 'Color', [1 .4 .5])
+    set(gcf, 'Color', [1 1 1]) %set(gcf, 'Color', [1 .4 .5])
     
     subplot(6,1,5)
     plot(d1(:,1),d1(:,2),'-k','linewidth',2)
+    set(gca,'xlim',tlim)
+    set(gca,'fontsize',fsz)
+
     subplot(6,1,6)
     plot(d2(:,1),d2(:,2),'-k','linewidth',2)
+    set(gca,'xlim',tlim)
+    set(gca,'fontsize',fsz)
     xlabel('Time, s')
     
     subplot(6,1,1:4)
@@ -94,10 +109,15 @@ end
     wtc(d1,d2,...
     'MonteCarloCount',mc_surr_num,'Dj',1/4,'S0',.25,'MaxScale',maxscale,'Mother','morlet',...
     'MakeFigure',logical(plotting>0));
+
 if plotting>0
+    f=gcf;
+    f.Children(1).Position(1)=.8969;
+    set(gca,'fontsize',fsz)
     if ~isempty(save_fig3_fname)
         print('-djpeg','-r100',[save_fig3_fname '_' datestr(now,'yyyy-mm-dd-HHMMSS') '.jpeg'])
         close all
+        %pause
     else
         title(['WTC: ' seriesname{1} '-' seriesname{2} ] )
         pause

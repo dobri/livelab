@@ -1,5 +1,11 @@
-% load Desktop/DATA_star_2020_06.mat
-% [WTCS,R,XWTS,W] = cwc_loop(lvtime,lvpos,censure);
+%{
+addpath('~/Desktop/livelab/star/')
+addpath('~/Desktop/livelab/star/wavelet-coherence/')
+load Desktop/DATA_star_2020_06.mat
+[WTCS,R,XWTS,W] = cwc_loop(lvtime,lvpos,censure);
+save('~/Desktop/livelab/star/xwt_summary.mat','WTCS','R','XWTS','W','CC')
+%}
+% 
 % x [WTCS,R,XWTS,W] = cwc_loop(lvtime,lvposu,censure);
 switch 4
     case 1
