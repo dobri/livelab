@@ -17,11 +17,12 @@ switch 4
         CC = XWTS;
         %CC = mean(XWTS,4);
         %CC = max(XWTS,[],4);
+        % sum(sum(sum(mean(XWTS,4)==0))) ans = 0
     case 4
         CC = log(abs(W));
-        %CC = max(CC,[],4);
-        CC = CC-min(CC(:));
-        CC = CC./max(CC(:));
+        %CC = log(abs(W));
+        %CC = CC-min(CC(:));
+        %CC = CC./max(CC(:));
         CC(:,:,:,3) = mean(CC,4);
 end
 
@@ -32,7 +33,8 @@ for lv=1:size(CC,4)
     figure(1)
     for tr=1:8
         subplot(6,4,tr+(lv-1)*8)
-        imagesc(CC(:,:,tr,lv),[0 1])
+        imagesc(CC(:,:,tr,lv),[0 7])
+        axis square
     end
     colormap hot
 end
@@ -50,9 +52,12 @@ for lv=1:size(CC,4)
         CClong = vertcat(CClong,cctemp);
     end
 end
+CClong(:,5) = sum(CClong(:,3)==[5 6 7 8],2);
+CClong(:,6) = sum(CClong(:,3)==[3 4 7 8],2);
+CClong(:,7) = sum(CClong(:,3)==[2 4 6 8],2);
 %{
 fid=fopen(['xwt_long.csv'],'w');
-fprintf(fid,'%s,','C','pp','tr','lv');fprintf(fid,'\n');
+fprintf(fid,'%s,','C','pp','tr','lv','eyes','groove','tempo');fprintf(fid,'\n');
 for r=1:size(CClong,1);fprintf(fid,'%8.4f,',CClong(r,:));fprintf(fid,'\n');end
 fclose(fid);
 %}
@@ -66,7 +71,9 @@ pause(.2)
 
 
 if 0
-    cm = CM(DistMat>0);
+    cm_type=4;
+    cm = CM(:,:,cm_type);
+    cm = cm(DistMat>0);
     dm = DistMat(DistMat>0);
     for lv=1:size(CC,4)
         figure(3)
@@ -80,7 +87,7 @@ if 0
             hold on
             plot(sort(dm),b(1)*(dm*0+1)+b(2)*sort(dm),'-or')
             hold off
-            ylim([0 1])
+            %ylim([0 1])
             xlim([0 6.1])
             text(.1,.25,num2str([b',r,p,p<(.05/8)]','%10.4f'),'unit','normalized','fontsize',16)
         end
@@ -97,7 +104,7 @@ if 0
             boxplot(cc,cm)
             [h,p,~,stats] = ttest2(cc(cm==0),cc(cm==1));
             disp([stats.tstat stats.df p])
-            ylim([0 1])
+            %ylim([0 1])
         end
     end
     pause(.2)
