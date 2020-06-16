@@ -1,28 +1,27 @@
 %{
 addpath('~/Desktop/livelab/star/')
 addpath('~/Desktop/livelab/star/wavelet-coherence/')
-load Desktop/DATA_star_2020_06.mat
-[WTCS,R,XWTS,W] = cwc_loop(lvtime,lvpos,censure);
+load ~/Desktop/cwc_pics/DATA_star_2020_06.mat
+[WTCSig,R,XWTSig,XWPower,XWAngle] = cwc_loop(lvtime,lvpos,censure);
 save('~/Desktop/livelab/star/xwt_summary.mat','WTCS','R','XWTS','W','CC')
 %}
 % 
 % x [WTCS,R,XWTS,W] = cwc_loop(lvtime,lvposu,censure);
 switch 4
     case 1
-        CC = WTCS;
+        CC = WTCSig;
     case 2
         CC = R;
-        %CC = mean(CC,4);
+        CC(:,:,:,3) = mean(CC,4);
     case 3
-        CC = XWTS;
-        %CC = mean(XWTS,4);
-        %CC = max(XWTS,[],4);
-        % sum(sum(sum(mean(XWTS,4)==0))) ans = 0
+        CC = XWTSig;
+        CC(:,:,:,3) = mean(CC,4);
+        % sum(sum(sum(mean(XWTSig,4)==0))) ans = 0
     case 4
-        CC = log(abs(W));
-        %CC = log(abs(W));
-        %CC = CC-min(CC(:));
-        %CC = CC./max(CC(:));
+        CC = log(abs(XWPower));
+        CC(:,:,:,3) = mean(CC,4);
+    case 5
+        CC = XWAngle;
         CC(:,:,:,3) = mean(CC,4);
 end
 
@@ -33,7 +32,7 @@ for lv=1:size(CC,4)
     figure(1)
     for tr=1:8
         subplot(6,4,tr+(lv-1)*8)
-        imagesc(CC(:,:,tr,lv),[0 7])
+        imagesc(CC(:,:,tr,lv),[min(CC(:)) max(CC(:))])
         axis square
     end
     colormap hot
@@ -139,10 +138,10 @@ for lv=1:size(CC,4)
     for c=1:1
         for trial=1:8
             temp = CC(:,:,trial,lv);
-            temp(isnan(temp))=0;
-            Cmat(:,trial)=mean(temp+temp')';
+            temp(isnan(temp)) = 0;
+            Cmat(:,trial) = mean(temp+temp')';
         end
-        Cmat_spss=vertcat(Cmat_spss,horzcat(ones(size(Cmat,1),1)*lv,Cmat));
+        Cmat_spss = vertcat(Cmat_spss,horzcat(ones(size(Cmat,1),1)*lv,Cmat));
     end
     %{
     fid=fopen(['xwt_lv' num2str(lv,'%1.0f') '.csv'],'w');

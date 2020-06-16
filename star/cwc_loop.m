@@ -1,8 +1,8 @@
-function [CC1,RR,CC2,WW] = cwc_loop(t,data,censure)
+function [CC1,RR,CC2,WW,Wangle] = cwc_loop(t,data,censure)
 
 ds=4;
 
-plotting = 0;
+plotting = 2;
 saving = 0;
 
 rows = meshgrid(1:33,1:33)';
@@ -15,6 +15,7 @@ CC1 = nan(33,33,8,2);
 RR = nan(33,33,8,2);
 CC2 = nan(33,33,8,2);
 WW = nan(33,33,8,2);
+Wangle = nan(33,33,8,2);
 total_runs = 8*33*33*2;
 
 for tr = 1:8
@@ -45,8 +46,9 @@ for lv=1:2
         CC2temp=nan(33*33,1);
         Rtemp=nan(33*33,1);
         Wtemp=nan(33*33,1);
-        %for st=1:33^2
-        parfor st=1:33^2
+        Wangletemp = nan(33*33,1);
+        for st=1:33^2
+        %parfor st=1:33^2
             row=source_target_pairs1(st);
             col=source_target_pairs2(st);
 
@@ -63,7 +65,7 @@ for lv=1:2
                     pic_name2 = [];
                     pic_name3 = [];
                 end
-                [CC1temp(st),Rtemp(st),CC2temp(st),Wtemp(st)] = cwc_test([t{tr}(1:ds:end) data{tr}(1:ds:end,lv,row)],...
+                [CC1temp(st),Rtemp(st),CC2temp(st),Wtemp(st),Wangletemp(st)] = cwc_test([t{tr}(1:ds:end) data{tr}(1:ds:end,lv,row)],...
                     [t{tr}(1:ds:end) data{tr}(1:ds:end,lv,col)],...
                     plotting,pic_name2,pic_name3);
             end
@@ -76,6 +78,7 @@ for lv=1:2
             RR(row,col,tr,lv) = Rtemp(st);
             CC2(row,col,tr,lv) = CC2temp(st);
             WW(row,col,tr,lv) = Wtemp(st);
+            Wangle(row,col,tr,lv) = Wangletemp(st);
         end
         fprintf('That''s %.3f proportion of all runs completed in %.2f minutes.\n',runs_n/total_runs,toc/60)
     end
