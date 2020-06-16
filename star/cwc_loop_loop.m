@@ -41,22 +41,30 @@ pause(.2)
 
 
 CClong = [];
+rows = meshgrid(1:33,1:33)';
+cols = meshgrid(1:33,1:33);
+source_target_pairs1 = rows(:);
+source_target_pairs2 = cols(:);
 for lv=1:size(CC,4)
     for tr=1:8
+        clear temp
         cctemp = CC(:,:,tr,lv);
+        temp(:,1) = cctemp(~isnan(cctemp));
+        temp(:,2) = rows(~isnan(cctemp));
+        temp(:,3) = cols(~isnan(cctemp));
         cctemp = cctemp(~isnan(cctemp));
-        cctemp(:,2) = (1:numel(cctemp));
-        cctemp(:,3) = tr;
-        cctemp(:,4) = lv;
-        CClong = vertcat(CClong,cctemp);
+        temp(:,4) = (1:numel(cctemp));
+        temp(:,5) = tr;
+        temp(:,6) = lv;
+        CClong = vertcat(CClong,temp);
     end
 end
-CClong(:,5) = sum(CClong(:,3)==[5 6 7 8],2);
-CClong(:,6) = sum(CClong(:,3)==[3 4 7 8],2);
-CClong(:,7) = sum(CClong(:,3)==[2 4 6 8],2);
+CClong(:,7) = sum(CClong(:,5)==[5 6 7 8],2);
+CClong(:,8) = sum(CClong(:,5)==[3 4 7 8],2);
+CClong(:,9) = sum(CClong(:,5)==[2 4 6 8],2);
 %{
 fid=fopen(['xwt_long.csv'],'w');
-fprintf(fid,'%s,','C','pp','tr','lv','eyes','groove','tempo');fprintf(fid,'\n');
+fprintf(fid,'%s,','C','pp1','pp2','pair','tr','lv','eyes','groove','tempo');fprintf(fid,'\n');
 for r=1:size(CClong,1);fprintf(fid,'%8.4f,',CClong(r,:));fprintf(fid,'\n');end
 fclose(fid);
 %}
@@ -64,7 +72,7 @@ fclose(fid);
 for lv=1:size(CC,4)
     figure(2)
     subplot(1,3,lv)
-    boxplot(CClong(CClong(:,4)==lv,1),CClong(CClong(:,4)==lv,3))
+    boxplot(CClong(CClong(:,6)==lv,1),CClong(CClong(:,6)==lv,5))
 end
 pause(.2)
 

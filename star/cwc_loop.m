@@ -2,7 +2,7 @@ function [CC1,RR,CC2,WW,Wangle] = cwc_loop(t,data,censure)
 
 ds=4;
 
-plotting = 2;
+plotting = 0;
 saving = 0;
 
 rows = meshgrid(1:33,1:33)';
