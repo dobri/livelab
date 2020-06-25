@@ -72,7 +72,13 @@ for triali=1:length(DATA)
     end
     
     % convert the data to z-scores
-    dataTraj_z = zscore(dataTraj_ds);
+    if any(isnan(dataTraj_ds(:)))
+    	mu=nanmean(dataTraj_ds);
+    	sigma=nanstd(dataTraj_ds);
+    	dataTraj_z=(dataTraj_ds-repmat(mu,length(dataTraj_ds),1))./repmat(sigma,length(dataTraj_ds),1);
+    else
+        dataTraj_z = zscore(dataTraj_ds);
+    end              
 
     % take average of the 4 head markers for each musician
     data_cello = mean(dataTraj_z(:,:,1:4),3);
