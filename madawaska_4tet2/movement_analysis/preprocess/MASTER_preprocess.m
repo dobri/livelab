@@ -1,24 +1,57 @@
 clear
 
+
 %% Where's my data?
-plotting_flag = 0;
 if strcmp(computer,'GLNXA64')
-    data_folder = input('Where is my fokin money? ');
+    data_folder = input('Where is my fokin money? '); % https://www.youtube.com/watch?v=pslUqRMPthk
 else
     data_folder = '/Users/emilywood/Desktop/MATLAB/trainorlab/madawaska_4tet/data/ensemble';
 end
-filenames = dir(fullfile(data_folder,'*.tsv'));
+which_piece = ['piece' num2str(input('Which of the two pieces? Type a number: '),'%1.0f')];
+plotting_flag = input('To visualize data along the way? Type 1 for yes: ');
 
 
 %% Import the QTM data saved as text files.
+% First, import all the 4 solo recordings as trial 1 (surrogate coupling).
+filenames = dir(fullfile(data_folder,[which_piece '_sol*.tsv']));
 for tr = 1:numel(filenames)
-    filename = filenames(tr); %filename = 'piece1_solo1.tsv'
+    filename = filenames(tr);
     fprintf('%s\n',filename.name)
     % Why? This works on a Mac?
     if ~strcmp(computer,'GLNXA64')
         filename=filename.name;
     end
-    DATA{tr} = import_tsv_from_qtm_to_matlab(filename);
+    DATA0{tr} = import_tsv_from_qtm_to_matlab(filename);
+end
+
+shortest_trial_len = inf;
+for tr = 1:numel(filenames)
+    shortest_trial_len = min(shortest_trial_len,size(DATA0{tr}.X,1));
+end
+
+clear DATA
+tr=1;
+DATA{1}.filename = DATA0{tr}.filename(1:end-5);
+DATA{1}.col_names = DATA0{tr}.col_names;
+DATA{1}.X = DATA0{tr}.X(1:shortest_trial_len,:,:);
+DATA{1}.sf = DATA0{tr}.sf;
+DATA{1}.ensemble_condition = 0;
+for tr = 2:numel(filenames)
+    DATA{1}.col_names = [DATA{1}.col_names DATA0{tr}.col_names];
+    DATA{1}.X(:,:,(end+1):(end+size(DATA0{tr}.X,3))) = DATA0{tr}.X(1:shortest_trial_len,:,:);
+end
+
+
+% Second, import the ensemble recordings as trials 2+.
+filenames = dir(fullfile(data_folder,[which_piece '_ens*.tsv']));
+for tr = 1:numel(filenames)
+    filename = filenames(tr); %filename = 'piece1_solo1.tsv'
+    fprintf('%s\n',filename.name)
+    if ~strcmp(computer,'GLNXA64')
+        filename=filename.name;
+    end
+    DATA{tr+1} = import_tsv_from_qtm_to_matlab(filename);
+    DATA{tr+1}.ensemble_condition = 1;
 end
 bodies_labels = {'violin1','violin2','viola','cello'};
 
@@ -28,11 +61,12 @@ bodies_labels = {'violin1','violin2','viola','cello'};
 target_vector = [-1 0];
 dims = [1 2];
 reference_markers = {'backl','backr'};
-for tr = 1:numel(filenames)
-    fprintf('%s\n',filenames(tr).name)
+for tr = 1:numel(DATA)
+    fprintf('%s\n',DATA{tr}.filename)
     DATA{tr} = rotate_to_target_vector(DATA{tr},target_vector,dims,bodies_labels,reference_markers,plotting_flag);
     if plotting_flag==1;pause;end
 end
+
 
 %% Get proportion of NaNs for each participant and marker.
 % Trials are cells, markers are columns.
@@ -42,8 +76,8 @@ for tr = 1:numel(DATA)
         DATA{tr}.missing_prop(1,marker) = sum(isnan(DATA{tr}.X(:,1,marker))/size(DATA{tr}.X(:,1,marker),1)); %proportion
     end
 end
-% What to do with nan gaps? Decide depending on how broken is the data, 
-% fill the nan parts or cut them out, or the whole marker?
+% What to do with nan gaps? Decide depending on how broken is the data. 
+% Fill the nan parts or cut them out, or the whole marker?
 
 
 %% Show the amount of missing data using figures and printing to screen.
@@ -78,8 +112,9 @@ end
 plotting_video_flag = 0;
 if plotting_video_flag == 1
     for tr = 1:numel(DATA)
-        fprintf('%s\n',filenames(tr).name)
+        fprintf('%s\n',DATA{tr}.filename)
         plot_animated_in_3d(DATA{tr}.X)
+        pause
     end
 end
 
@@ -105,6 +140,7 @@ for tr = 1:numel(DATA)
         end
     end
 end
+
 
 %% Speed of head movement. MSD?
 for tr = 1:numel(DATA)
@@ -163,10 +199,12 @@ for tr = 1:numel(DATA)
     end
 end
 
-% Now prepare data for gc analysis - EW
+
+%% Now prepare data for gc analysis - EW
 % specify the names of the markers I want to analyze!
 headMark = {'cellohat0','cellohat1','cellohat2','cellohat3','violahat0','violahat1','violahat2','violahat3',...
     'violin1hat0','violin1hat1','violin1hat2','violin1hat3','violin2hat0','violin2hat1','violin2hat2','violin2hat3'};
+
 
 % Take the desired markers, downsample the data, convert to z-scores, and 
 % take the average of the 4 head markers for each musician.
@@ -180,7 +218,11 @@ DATA=prepare_data_for_mvgc(DATA,headMark,plotting_flag);
 M=create_matrix_for_mvgc(DATA, plotting_flag);
 
 
-%% What movement variables with reduced dimension should to use?
+%% Save the whole DATA structure to a mat file.
+% save(fullfile(data_folder,['DATA_piece' which_piece(end) '.mat']),'DATA','-v7.3')
+
+
+%% ... What other movement variables with reduced dimension should we use?
 % v AP sway (front-back). (Y-axis in the rotated data).
 % v MSD or speed. (Do that!)
 % x PCA? (Probably not necessary here to fine-tune beyond ML and AP. We know that PC1 and PC2 will correspond closely to the AP and ML axes.)

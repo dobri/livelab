@@ -12,6 +12,18 @@ else
     sf = varargin{1};
 end
 
+if isempty(varargin)
+    real_units_time_plot_flag = 0;
+else
+    real_units_time_plot_flag = varargin{2};
+end
+
+if real_units_time_plot_flag == 1
+    ds = 1;
+else
+    ds=10;
+end
+
 x1=squeeze(X(1,1,:));
 y1=squeeze(X(1,2,:));
 z1=squeeze(X(1,3,:));
@@ -21,7 +33,7 @@ xlim([-1000 3000])
 ylim([-0 3200])
 zlim([  500 1500])
 set(gca,'view',[-13 74])
-for t=2:size(X,1)
+for t=2:ds:size(X,1)
     x1=squeeze(X(t,1,:));
     y1=squeeze(X(t,2,:));
     z1=squeeze(X(t,3,:));
@@ -29,5 +41,9 @@ for t=2:size(X,1)
     set(p,'YData',y1)
     set(p,'ZData',z1)
     drawnow
-    pause(1/sf)%pause
+    if real_units_time_plot_flag
+        pause(1/sf)
+    else
+        pause(eps)
+    end
 end
