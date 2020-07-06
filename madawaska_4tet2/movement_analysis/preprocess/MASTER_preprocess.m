@@ -73,7 +73,7 @@ end
 for tr = 1:numel(DATA)
     for marker=1:size(DATA{tr}.X,3)
         %DATA{tr}.missing_count(1,marker) = sum(isnan(DATA{tr}.X(:,1,marker))); % this is absolute count
-        DATA{tr}.missing_prop(1,marker) = sum(isnan(DATA{tr}.X(:,1,marker))/size(DATA{tr}.X(:,1,marker),1)); %proportion
+        DATA{tr}.missing_prop(1,marker) = sum(isnan(DATA{tr}.X(:,1,marker)))/size(DATA{tr}.X(:,1,marker),1); %proportion
     end
 end
 % What to do with nan gaps? Decide depending on how broken is the data. 
@@ -90,7 +90,7 @@ if plotting_flag == 1
                 for m = 1:numel(DATA{tr}.col_names)
                     if strcmp(DATA{tr}.col_names{m},[bodies_labels{body} wanted_head_markers{marker}])
                         plot(body*10+marker,DATA{tr}.missing_prop(m),'s');
-                        fprintf('%6.3f,',DATA{tr}.missing_prop(m))
+                        fprintf('%6.4f,',DATA{tr}.missing_prop(m))
                         text(body*10+marker,.1,DATA{tr}.col_names{m},'Rotation',90)
                         hold on
                     end
@@ -105,11 +105,11 @@ if plotting_flag == 1
     end
 end
 % It seems that head markers were perfectly recorded, at least for piece1.
-% We still have to verify that's the case for piece2.
+% The head markers have some missing values for trials 6 and 8 in piece 2.
 
 
 %% To confirm the data looks OK set the flag to 1 and run an animated plot.
-plotting_video_flag = 0;
+plotting_video_flag = 1;
 if plotting_video_flag == 1
     for tr = 1:numel(DATA)
         fprintf('%s\n',DATA{tr}.filename)
@@ -208,7 +208,7 @@ headMark = {'cellohat0','cellohat1','cellohat2','cellohat3','violahat0','violaha
 
 % Take the desired markers, downsample the data, convert to z-scores, and 
 % take the average of the 4 head markers for each musician.
-plotting_flag=0; %set this to 1 if you want to see the plots
+plotting_flag=1; %set this to 1 if you want to see the plots
 DATA=prepare_data_for_mvgc(DATA,headMark,plotting_flag);
 
 % Our DATA variable has a struct called AP now, which is the
