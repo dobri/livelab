@@ -89,15 +89,27 @@ if plotting_flag == 1
             for marker = 1:numel(wanted_head_markers)
                 for m = 1:numel(DATA{tr}.col_names)
                     if strcmp(DATA{tr}.col_names{m},[bodies_labels{body} wanted_head_markers{marker}])
+                        figure(1)
                         plot(body*10+marker,DATA{tr}.missing_prop(m),'s');
                         fprintf('%6.4f,',DATA{tr}.missing_prop(m))
                         text(body*10+marker,.1,DATA{tr}.col_names{m},'Rotation',90)
                         hold on
+
+                        figure(2)
+                        subplot(2,1,1)
+                        plot(DATA{tr}.X(:,:,m)-nanmean(DATA{tr}.X(:,:,m)))
+                        hold on
+                        plot(sum(isnan(DATA{tr}.X(:,:,m)),2)*1e2,'--r','linewidth',2)
+                        hold off
+                        subplot(2,1,2)
+                        plot(DATA{tr}.X_detrended(:,:,m)-nanmean(DATA{tr}.X_detrended(:,:,m)))
+                        pause
                     end
                 end
             end
         end
         fprintf('\n')
+        figure(1)
         set(gca,'XTick',[])
         hold off
         ylim([0 1])
