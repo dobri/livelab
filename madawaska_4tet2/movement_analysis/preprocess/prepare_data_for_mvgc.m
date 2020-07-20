@@ -30,7 +30,8 @@ for triali=1:length(DATA)
     % take out the data
     sf=DATA{triali}.sf; %sampling rate
     %recordedLength = (length(DATA{triali}.X))/sf; % length of data (in seconds)
-    dataTraj = DATA{triali}.X; % take out the actual data
+    dataTraj = DATA{triali}.X_filled; % take out the actual data
+
     markLabels = DATA{triali}.col_names;
 
     % select only the head markers we want
@@ -39,7 +40,7 @@ for triali=1:length(DATA)
         markInd(n) = find(strcmp(markLabels, headMark{n}));
     end
 
-    dataTraj=dataTraj(:,:,markInd);
+    dataTraj=dataTraj(:,:,markInd);               
 
     % downsample the data
     timePoints=(1:length(dataTraj))'./sf;
@@ -57,7 +58,7 @@ for triali=1:length(DATA)
         dataTraj_ds(w,:,:)=mean(dataTraj(windows_indices(w,1):windows_indices(w,2),:,:),1);
         timePoints_ds(w)=mean(timePoints(windows_indices(w,1):windows_indices(w,2)));
     end
-    
+
     % optional plotting for verifying the downsampling
     % take just one dimension
     if plotting_flag==1

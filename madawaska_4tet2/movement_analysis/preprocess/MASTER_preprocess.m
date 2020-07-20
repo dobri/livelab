@@ -89,27 +89,15 @@ if plotting_flag == 1
             for marker = 1:numel(wanted_head_markers)
                 for m = 1:numel(DATA{tr}.col_names)
                     if strcmp(DATA{tr}.col_names{m},[bodies_labels{body} wanted_head_markers{marker}])
-                        figure(1)
                         plot(body*10+marker,DATA{tr}.missing_prop(m),'s');
                         fprintf('%6.4f,',DATA{tr}.missing_prop(m))
                         text(body*10+marker,.1,DATA{tr}.col_names{m},'Rotation',90)
                         hold on
-
-                        figure(2)
-                        subplot(2,1,1)
-                        plot(DATA{tr}.X(:,:,m)-nanmean(DATA{tr}.X(:,:,m)))
-                        hold on
-                        plot(sum(isnan(DATA{tr}.X(:,:,m)),2)*1e2,'--r','linewidth',2)
-                        hold off
-                        subplot(2,1,2)
-                        plot(DATA{tr}.X_detrended(:,:,m)-nanmean(DATA{tr}.X_detrended(:,:,m)))
-                        pause
                     end
                 end
             end
         end
         fprintf('\n')
-        figure(1)
         set(gca,'XTick',[])
         hold off
         ylim([0 1])
@@ -153,6 +141,27 @@ for tr = 1:numel(DATA)
     end
 end
 
+%Now I will fill gaps with linear interpolation in the X vector
+
+for tr = 1:numel(DATA)
+    DATA{tr}.X_filled = zeros(size(DATA{tr}.X,1),size(DATA{tr}.X,2),size(DATA{tr}.X,3));
+     for marker=1:size(DATA{tr}.X,3)
+        DATA{tr}.X_filled(:,:,marker) = fill_nans_with_splines_X(DATA{tr}.X(:,:,marker));
+    end
+end
+
+%check to see if it worked
+headMark = {'cellohat0','cellohat1','cellohat2','cellohat3','violahat0','violahat1','violahat2','violahat3',...
+    'violin1hat0','violin1hat1','violin1hat2','violin1hat3','violin2hat0','violin2hat1','violin2hat2','violin2hat3'};
+
+for tr = 1:numel(DATA)
+    fprintf('Trial %1.0f\n',tr)
+    for marker=1:size(DATA{tr}.X,3)
+        if any(strcmp(headMark,DATA{tr}.col_names{marker}))
+            fprintf('%6.4f\n',sum(isnan(DATA{tr}.X_filled(:,1,marker)))/size(DATA{tr}.X_filled(:,1,marker),1)); %proportion of nans. should all be 0
+        end
+    end
+end
 
 %% Speed of head movement. MSD?
 for tr = 1:numel(DATA)
@@ -227,9 +236,10 @@ DATA=prepare_data_for_mvgc(DATA,headMark,plotting_flag);
 % anterior-posterior body sway of the 4 musicians.
 
 % Get the data into a matrix form for the MVGC toolbox
-M=create_matrix_for_mvgc(DATA, plotting_flag);
+M2=create_matrix_for_mvgc(DATA, plotting_flag);
 
-
+D{1}.M=M1;
+D{2}.M=M2;
 %% Save the whole DATA structure to a mat file.
 % save(fullfile(data_folder,['DATA_piece' which_piece(end) '.mat']),'DATA','-v7.3')
 
