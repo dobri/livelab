@@ -1,31 +1,31 @@
-function M = create_matrix_for_mvgc(DATA, plotting_flag)
+function M = create_matrix_for_mvgc(DATA, dataTraj, plotting_flag)
 
-% This function takes the madawaska AP body sway data and gets it inthe correct form
-% for the mvgc toolbox
+% This function takes the processed madawaska body sway data and gets it 
+% in the correct form for the mvgc toolbox
 
-% The input is the all the ensemble madawaska data. Importantly, this data
-% has to already be processed by the prepare_data_for_mvgc script.
+% The input is the all the processed ensemble madawaska data from the 
+% prepare_data_for_mvgc function.
 
 % If you want to plot everything, set plotting_flag=1. If not, set it to 0.
 
 % first, let's see how long each trial is
 trialLengths=zeros(1,length(DATA));
 for i=1:length(DATA)
-    trialLengths(1,i)=length(DATA{i}.AP);
+    trialLengths(1,i)=length(DATA{i}.(dataTraj));
 end
 
 minVal=min(trialLengths);
 % ok I'm going to cap all of them at minVal (2513) because that's the shortest
 
 % now create the matrix M for MVGC
-nvars=size(DATA{1}.AP,3);
+nvars=size(DATA{1}.(dataTraj),3);
 nobs=minVal;
 ntrials=length(DATA);
 
 M=zeros(nvars,nobs,ntrials);
 
 for tri=1:ntrials
-    AP=permute(DATA{tri}.AP,[3,1,2]);
+    AP=permute(DATA{tri}.(dataTraj),[3,1,2]);
     M(:,:,tri)=AP(:,1:minVal);
 end
 
