@@ -8,22 +8,21 @@
 % MASTER_preprocess script
 % If you want to plot everything, set plotting_flag = 1. If not, set to 0.
 
+%clear all
 clc
 cd '~/Desktop/Musical_following/ANALYSIS';
 addpath(genpath('~/Documents/MATLAB/mvgc_v1.0'));
 
 plotting_flag = 0;
-save_flag = 0;
+save_flag = 1; % Set to 1 if you want this loop to save a spreadsheet. If not, set to 0.
+
+
 
 %% Read in the data
 load('D.mat');
 
-% Flag for saving data. Set to 1 if you want this loop to save a
-% spreadsheet of the data. 0 if no
-save_flag=0;
-
 % Get fieldnames
-field_names = fieldnames(D{1});
+%field_names = fieldnames(D{1}.);
 
 
 
@@ -50,14 +49,14 @@ seed      = 0;      % random seed (0 for unseeded)
 
 
 %% Check or change downsampling rates
-ds_rates = {'100','200','300'}; % CHANGE THIS
+%ds_rates = {'100','200','300'}; % CHANGE THIS
 
 
 
 %% Loop through all participants
 for participanti = 1:numel(D)
     for ds_rate = 1 %:numel(ds_rates)
-        X = D{participanti}.M;
+        X = D{participanti}.M_100;
         ntrials   = size(X,3);      % number of trials
         nobs      = size(X,2);      % number of observations per trial
         nvars     = size(X,1);      % number of variables (two recordings)
@@ -186,8 +185,8 @@ if save_flag == 1
 	GCdata_reconfig1=[];
 	GCdata_reconfig2=[];
 
-	for participanti = 1:numel(D)
-        for zz=1:size(D{participanti}.gc_data,3)
+	for participanti = 1:numel(D) % Loop through participants
+        for zz=1:size(D{participanti}.gc_data,3) % Loops through 
             for yy=1:size(D{participanti}.gc_data,2)
                 for xx=1:size(D{participanti}.gc_data,1)
                     step=D{participanti}.gc_data(xx,yy,zz);

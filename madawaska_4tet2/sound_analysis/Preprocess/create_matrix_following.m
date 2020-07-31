@@ -11,19 +11,28 @@ function M = create_matrix_following(DATA, plotting_flag)
 % nobs is the length of that trial. 
 
 
+%% Create matrix M for MVGC toolbox
+
+% fields = fieldnames(DATA{triali})
+% for ds = fields'
+%         do something here
+%     
+% 
+
+
 
 %% Where's my data?
 trialLengths = zeros(1,length(DATA)); % How long is each trial?
 
 for triali = 1:length(DATA) % number of trials
 
-    trialLengths(1,triali) = length(DATA{triali}.ds_100);
+    trialLengths(1,triali) = length(DATA{triali}.ds_prep_100);
     
 end
 
 minVal = min(trialLengths); % Find the shortest trial
 
-nvars = size(DATA{1}.ds_100,3); % We can just use trial 1 because all trials
+nvars = size(DATA{1}.ds_prep_100,3); % We can just use trial 1 because all trials
 % should be the same length (?)
 nobs = minVal;
 ntrials = length(DATA);
@@ -31,7 +40,7 @@ ntrials = length(DATA);
 M = zeros(nvars,nobs,ntrials);
 
 for tri=1:ntrials
-    data = permute(DATA{tri}.ds_100,[3,1,2]); %(?)
+    data = permute(DATA{tri}.ds_prep_100,[3,1,2]); %(?)
     M(:,:,tri) = data(:,1:minVal);
 end
 
