@@ -1,5 +1,5 @@
 clear
-
+%go to line 205 if you already have data files from Dobri
 
 %% Where's my data?
 if strcmp(computer,'GLNXA64')
@@ -202,7 +202,7 @@ end
 %% Save the whole DATA structure to a mat file.
 % save(fullfile(data_folder,['DATA_piece' which_piece(end) '.mat']),'DATA','-v7.3')
 
-%% START HERE IF YOU ALREADY HAVE DATA FILES FROM DOBRI
+%% START HERE IF YOU ALREADY HAVE DATA FILES FROM DOBRI (DATA_piece1.mat, DATA_piece2.mat)
 % first, we'll define some variables from above that we haven't run yet
 bodies_labels = {'violin1','violin2','viola','cello'};
 plotting_flag=1;
@@ -227,7 +227,7 @@ DATA2=DATA;
 DATA2(1)=[];
 
 %% Show the amount of missing data using figures and printing to screen.
-%I already know that DATA1 was recording perfectly. So let's check DATA2
+%I already know that DATA1 markers were recorded perfectly. So let's check DATA2
 wanted_head_markers = {'hat0','hat1','hat2','hat3'};
 if plotting_flag == 1
     for tr = 1:numel(DATA2)
@@ -355,22 +355,26 @@ end
 headMark = {'cellohat0','cellohat1','cellohat2','cellohat3','violahat0','violahat1','violahat2','violahat3',...
     'violin1hat0','violin1hat1','violin1hat2','violin1hat3','violin2hat0','violin2hat1','violin2hat2','violin2hat3'};
 
-% From our three data trajectories 'X', 'X_detrended' and 'the_Trend', take 
-% the desired markers (head markers), downsample the data, convert to  
+% Take our two data trajectories 'X' and 'X_detrended' and then take 
+% our desired markers (head markers), downsample the data, convert to  
 % z-scores, and take the average of the 4 head markers for each musician.
 
-dataTrajs={'X','X_detrended','the_Trend'};
+dataTrajs={'X','X_detrended'};
 for i = 1:length(dataTrajs)
     DATA1=prepare_data_for_mvgc(DATA1,dataTrajs{i},headMark,plotting_flag);
     DATA2=prepare_data_for_mvgc(DATA2,dataTrajs{i},headMark,plotting_flag);
 end
 
-% Our DATA variables have new structs called X_processed, X_detrended_processed
-% and the_Trend_processed, which correspond to the anterior-posterior body 
+% Our DATA variables have new structs called X_processed and
+% X_detrended_processed, which correspond to the anterior-posterior body 
 % sway of the 4 musicians in each of these trajectories.
 
+%Calculate acceleration
+DATA1=calculate_acceleration(DATA1,wanted_head_markers, bodies_labels, plotting_flag);
+DATA2=calculate_acceleration(DATA2,wanted_head_markers, bodies_labels, plotting_flag);
+
 % Get the data into a matrix form for the MVGC toolbox
-dataTrajs={'X_processed','X_detrended_processed','the_Trend_processed'};
+dataTrajs={'X_processed','X_detrended_processed'};
 for i = 1:length(dataTrajs)
   D{1}.(dataTrajs{i})=create_matrix_for_mvgc(DATA1, dataTrajs{i}, plotting_flag);
   D{2}.(dataTrajs{i})=create_matrix_for_mvgc(DATA2, dataTrajs{i}, plotting_flag);
@@ -378,8 +382,8 @@ end
 
 % Now we have a NEW data variable called D.
 % There are TWO structs in it corresponding to piece 1 and piece 2
-% WIthin these structs, we have a matrix for mvgc for each of our three
-% data trajectories, including X, X_detrended and the_Trend
+% WIthin these structs, we have a matrix for mvgc for each of our two
+% data trajectories, including X and X_detrended
 
 % Now take this variable D over to the mvgc toolbox for gc!
 save('D','D')
@@ -390,5 +394,5 @@ save('D','D')
 % v MSD or speed. (Do that!)
 % x PCA? (Probably not necessary here to fine-tune beyond ML and AP. We know that PC1 and PC2 will correspond closely to the AP and ML axes.)
 % x The thing from quaternions? (No time for that.)
-% ACCELERATION!
+% ACCELERATION
 

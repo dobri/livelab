@@ -12,13 +12,15 @@ addpath(genpath('~/Desktop/MATLAB/toolboxes/mvgc_v1.0'))
 % Flag for saving data. Set to 1 if you want this loop to save a
 % spreadsheet of the data. 0 if no
 
-save_flag=1;
+save_flag=0;
 
 % Get fieldnames
-dataTrajs=fieldnames(D{1})';
+%dataTrajs=fieldnames(D{1})';
+dataTrajs={'X_processed','X_detrended_processed'};
 
 for piecei = 1:numel(D)
-    for traji = 1:numel(fieldnames(D{piecei}))
+    
+    for traji = 1:numel(dataTrajs)
         %% Parameters
         X=D{piecei}.(dataTrajs{traji});
 
@@ -27,6 +29,7 @@ for piecei = 1:numel(D)
         nvars     = size(X,1);      % number of variables
         
         bsize     = [];     % permutation test block size: empty for automatic (uses model order)
+        nperms    = 100;    % number of permutations for permutation test
 
         regmode   = 'OLS';  % VAR model estimation regression mode ('OLS', 'LWR' or empty for default)
         icregmode = 'LWR';  % information criteria regression mode ('OLS', 'LWR' or empty for default)
@@ -82,6 +85,7 @@ for piecei = 1:numel(D)
         % Preallocate some vectors
         GC_data=zeros(nvars,nvars,ntrials);
         pval_data=zeros(nvars,nvars,ntrials);
+        pval_p_data=zeros(nvars,nvars,ntrials);
         sig_data=zeros(nvars,nvars,ntrials);
         cd_data=zeros(1,ntrials);
 
@@ -102,11 +106,12 @@ for piecei = 1:numel(D)
             % VAR model, to as many lags as it takes to decay to below the numerical
             % tolerance level, or to acmaxlags lags if specified (i.e. non-empty).
 
-            [G,info] = var_to_autocov(A,SIG,acmaxlags);
+            [G,res] = var_to_autocov(A,SIG,acmaxlags);
 
             % Check for errors
 
-            var_info(info,true); % report results (and bail out on error)
+            fprintf('\nVAR check:\n'); disp(res); % report results...
+            assert(~res.error,'bad VAR');         % ...and bail out if there are errors
 
             % Calculate time-domain pairwise-conditional causalities 
 
@@ -122,11 +127,21 @@ for piecei = 1:numel(D)
 
             pval = mvgc_pval(F,morder,nobs,ntrials,1,1,nvars-2,tstat); % take careful note of arguments!
             pval_data(:,:,triali)=pval;
-            label_pval=[dataTrajs{traji},'_pval'];
-            D{piecei}.(label_pval)=pval_data;
 
             sig  = significance(pval,alpha,mhtc);
             sig_data(:,:,triali)=sig;
+            
+            % Permutation test
+
+            FNULL = permtest_tsdata_to_pwcgc(X,morder,bsize,nperms,regmode,acmaxlags);
+
+            % (We should really check for permutation estimates here.)
+            % Permutation test significance test (adjusting for multiple hypotheses).
+
+            pval_p = empirical_pval(F,FNULL);
+            pval_p_data(:,:,triali)=pval_p;
+
+            sig_p  = significance(pval_p,alpha,mhtc);
 
             % Plot time-domain causal graph, p-values and significance.
 
@@ -145,29 +160,63 @@ for piecei = 1:numel(D)
 
             cd = mean(F(~isnan(F)));
             cd_data(1,triali)=cd;
-            label_gc=[dataTrajs{traji},'_gc'];
-            D{piecei}.(label_gc)=GC_data;  
         end
         
+        % Save pvals (both normal and permutation based) and gc data into our
+        % variable 'D'
+
+        label_pval=[dataTrajs{traji},'_pval'];
+        D{piecei}.(label_pval)=pval_data;
+
+        label_pval_p=[dataTrajs{traji},'_pval_p'];
+        D{piecei}.(label_pval_p)=pval_p_data;
+
+        label_gc=[dataTrajs{traji},'_gc'];
+        D{piecei}.(label_gc)=GC_data;  
+
+        
     end
+    
 end
 
+%Now our variable 'D' has some new fields. For each piece, there is X_processed_morder
+%(which stores the model order), X_processed_pval (which stores the
+%p_vals for each gc pair), and X_processed_gc that has the gc
+%values for each pair. These variables were also created for X_detrended
+%for each piece
+
+save('D','D')
+
 %% Save data
-if save_flag == 1
+if save_flag == 1 %Right now this only outputs the X_processed trajectory, not
+%the X_detrended_processed. **NEED TO ADD A LOOP HERE FOR
+%X_detrended_processed!**
                 
-	% Make table of the raw gc scores for each pair and save
+	% Make table of the raw gc scores for each pair, the p-val for each 
+    % pair, and the permutation-based p-value 
+    
 	GCdata_reconfig1=[];
 	GCdata_reconfig2=[];
+    
+    pval_reconfig1=[];
+    pval_reconfig2=[];
+
+	pval_p_reconfig1=[];
+	pval_p_reconfig2=[];
 
 	for piecei = 1:numel(D)
-        for zz=1:size(D{piecei}.gc_data,3)
-            for yy=1:size(D{piecei}.gc_data,2)
-                for xx=1:size(D{piecei}.gc_data,1)
-                    step=D{piecei}.gc_data(xx,yy,zz);
+        for zz=1:size(D{1}.X_processed_gc,3)
+            for yy=1:size(D{1}.X_processed_gc,2)
+                for xx=1:size(D{1}.X_processed_gc,1)
                     if piecei==1
-                        GCdata_reconfig1=[GCdata_reconfig1,step];
+                        GCdata_reconfig1=[GCdata_reconfig1,D{piecei}.X_processed_gc(xx,yy,zz)];
+                        pval_reconfig1=[pval_reconfig1, D{piecei}.X_processed_pval(xx,yy,zz)];
+                        pval_p_reconfig1=[pval_p_reconfig1, D{piecei}.X_processed_pval_p(xx,yy,zz)];
+
                     else
-                        GCdata_reconfig2=[GCdata_reconfig2,step];
+                        GCdata_reconfig2=[GCdata_reconfig2,D{piecei}.X_processed_gc(xx,yy,zz)];
+                        pval_reconfig2=[pval_reconfig2, D{piecei}.X_processed_pval(xx,yy,zz)];
+                        pval_p_reconfig2=[pval_p_reconfig2, D{piecei}.X_processed_pval_p(xx,yy,zz)];                       
                     end
                 end
             end
@@ -177,6 +226,14 @@ if save_flag == 1
     GCdata_reconfig1=GCdata_reconfig1(~isnan(GCdata_reconfig1))';
     GCdata_reconfig2=GCdata_reconfig2(~isnan(GCdata_reconfig2))';
     GCdata_reconfig_all=[GCdata_reconfig1;GCdata_reconfig2];
+    
+    pval_reconfig1=pval_reconfig1(~isnan(pval_reconfig1))';
+    pval_reconfig2=pval_reconfig2(~isnan(pval_reconfig2))';
+    pval_reconfig_all=[pval_reconfig1;pval_reconfig2];
+
+    pval_p_reconfig1=pval_p_reconfig1(~isnan(pval_p_reconfig1))';
+    pval_p_reconfig2=pval_p_reconfig2(~isnan(pval_p_reconfig2))';
+    pval_p_reconfig_all=[pval_p_reconfig1;pval_p_reconfig2];
 
     %Make vector correponding to mechanical vs expressive trials
     condition1=[1+zeros(12,1);2+zeros(12,1);1+zeros(12,1);2+zeros(12,1);...
@@ -190,7 +247,7 @@ if save_flag == 1
     trial=repmat(trial,2,1);
 
     %Make vector for time collapsed across mechnical vs. expressive
-    trial_collapsed = repmat(repelem([1:4]',24),2,1)
+    trial_collapsed = repmat(repelem([1:4]',24),2,1);
 
     %Make vector for piece
     piece=repelem([1;2],96);
@@ -198,9 +255,9 @@ if save_flag == 1
     %Make vector for pair
     pair=repmat([1:12]',16,1);
 
-    T=table(pair,GCdata_reconfig_all, condition, trial, trial_collapsed, piece);
-    T.Properties.VariableNames = {'pair','gc', 'condition','trial', 'trial_collapsed','piece'}
-    filename='mada_gc3.xlsx';
+    T=table(pair,GCdata_reconfig_all, condition, trial, trial_collapsed, piece, pval_reconfig_all, pval_p_reconfig_all);
+    T.Properties.VariableNames = {'pair','gc', 'condition','trial', 'trial_collapsed','piece','pval','pval_permut'};
+    filename='mada_gc_v4.xlsx';
     writetable(T,filename);
 end
 
