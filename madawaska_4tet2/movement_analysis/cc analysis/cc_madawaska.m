@@ -12,7 +12,7 @@ save_flag=0;
 
 %Specify parameters
 %Which method are we going to use? Dobri = 0 or Andrew = 1?
-method_flag=0;
+method_flag=1;
 
 %if method_flag==0
 %end
@@ -28,11 +28,9 @@ morders=[D{1}.X_processed_morder,D{1}.X_detrended_processed_morder,...
 
 
 %% CC analysis
-counter=[];
+counter=0;
 for piecei = 1:numel(D)
-    
     for traji = 1:numel(dataTrajs)
-
         % Preallocate vector to store correlation coefficients
         cor_vals=zeros(6*size(D{piecei}.(dataTrajs{traji}),3),1,numel(D));
         
@@ -68,18 +66,14 @@ for piecei = 1:numel(D)
             %cor_vals(5+6*(triali-1),1,piecei)=max(abs(corrgram(D{piecei}.(dataTrajs{traji})(2,:,triali),D{piecei}.(dataTrajs{traji})(4,:,triali),maxlag,window,overlap)),[],'all');
             %cor_vals(6+6*(triali-1),1,piecei)=max(abs(corrgram(D{piecei}.(dataTrajs{traji})(3,:,triali),D{piecei}.(dataTrajs{traji})(4,:,triali),maxlag,window,overlap)),[],'all');
         end
-        
         label_cc=[dataTrajs{traji},'_cc'];
         D{piecei}.(label_cc)=cor_vals(:,:,piecei); 
-        
     end
-    
-    
 end
 subplot(2,1,1)
-plot(D{1}.X_detrended_processed_cc)
+boxplot(D{piecei}.X_processed_cc,reshape(meshgrid(1:8,1:6),1,[])')
 subplot(2,1,2)
-plot(D{1}.X_processed_cc);
+boxplot(D{piecei}.X_detrended_processed_cc,reshape(meshgrid(1:8,1:6),1,[])')
 %save('D','D')
 
 
