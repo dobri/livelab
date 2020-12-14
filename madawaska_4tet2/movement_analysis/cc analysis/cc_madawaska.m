@@ -11,15 +11,19 @@
 save_flag=0;
 
 %Specify parameters
-%Which method are we going to use? Dobri = 0 or Andrew = 1?
-method_flag=0;
+%Which method are we going to use?
+switch 1
+    case 0
+        method_flag='wcc';
+    case 1
+        method_flag='cc_and_gcorder';
+end
 
-%if method_flag==0
-%end
-sr = 8; % Hz. After downsampling?
-win_len = 5; % seconds
-max_lag = 1; % seconds
-%haven't tried these different methods yet. Keep doing Andrew's method for now
+if strcmp(method_flag,'wcc')
+    sr = 8; % Hz. After downsampling?
+    win_len = 5; % seconds
+    max_lag = 1; % seconds
+end
 
 dataTrajs={'X_processed','X_detrended_processed'};
 
@@ -38,11 +42,11 @@ for piecei = 1:numel(D)
         counter=counter+1;
         
         switch method_flag
-            case 1
+            case 'cc_and_gcorder'
                 maxlag = morders(counter); %lag is the same as the model order for gc
                 window=length(D{piecei}.(dataTrajs{traji})); %Whole length of the piece. Dobri suggests not to use this. Will discuss.
                 overlap=0; %No overlap
-            case 0
+            case 'wcc'
                 maxlag=round(max_lag*sr); %lag is the same as the model order for gc
                 window=round(win_len*sr); %Whole length of the piece. Dobri suggests not to use this. Will discuss.
                 overlap=round(window/5); % half a window overlap
@@ -52,7 +56,7 @@ for piecei = 1:numel(D)
             %take the maximum unsigned CC coefficient for each of the 6 possible
             %pairs of musicians for each trial
             switch method_flag
-                case 1
+                case 'cc_and_gcorder'
                     % lag is the same as the model order for gc
                     % single trial-long window
                     mcounter = 0;
@@ -65,7 +69,7 @@ for piecei = 1:numel(D)
                             end
                         end
                     end
-                case 0
+                case 'wcc'
                     % max(A,[],'all') works from R2018b after.
                     cor_vals(1+6*(triali-1),1,piecei)=max(max(abs(corrgram(D{piecei}.(dataTrajs{traji})(1,:,triali),D{piecei}.(dataTrajs{traji})(2,:,triali),maxlag,window,overlap))));
                     cor_vals(2+6*(triali-1),1,piecei)=max(max(abs(corrgram(D{piecei}.(dataTrajs{traji})(1,:,triali),D{piecei}.(dataTrajs{traji})(3,:,triali),maxlag,window,overlap))));
