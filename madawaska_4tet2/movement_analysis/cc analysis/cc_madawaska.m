@@ -12,7 +12,7 @@ save_flag=0;
 
 %Specify parameters
 %Which method are we going to use? Dobri = 0 or Andrew = 1?
-method_flag=1;
+method_flag=0;
 
 %if method_flag==0
 %end
@@ -39,7 +39,7 @@ for piecei = 1:numel(D)
         
         switch method_flag
             case 1
-                maxlag=morders(counter); %lag is the same as the model order for gc
+                maxlag = morders(counter); %lag is the same as the model order for gc
                 window=length(D{piecei}.(dataTrajs{traji})); %Whole length of the piece. Dobri suggests not to use this. Will discuss.
                 overlap=0; %No overlap
             case 0
@@ -51,20 +51,29 @@ for piecei = 1:numel(D)
         for triali=1:size(D{piecei}.(dataTrajs{traji}),3)
             %take the maximum unsigned CC coefficient for each of the 6 possible
             %pairs of musicians for each trial
-            % max(A,[],'all') works from R2018b after.
-            cor_vals(1+6*(triali-1),1,piecei)=max(max(abs(corrgram(D{piecei}.(dataTrajs{traji})(1,:,triali),D{piecei}.(dataTrajs{traji})(2,:,triali),maxlag,window,overlap))));
-            cor_vals(2+6*(triali-1),1,piecei)=max(max(abs(corrgram(D{piecei}.(dataTrajs{traji})(1,:,triali),D{piecei}.(dataTrajs{traji})(3,:,triali),maxlag,window,overlap))));
-            cor_vals(3+6*(triali-1),1,piecei)=max(max(abs(corrgram(D{piecei}.(dataTrajs{traji})(1,:,triali),D{piecei}.(dataTrajs{traji})(4,:,triali),maxlag,window,overlap))));
-            cor_vals(4+6*(triali-1),1,piecei)=max(max(abs(corrgram(D{piecei}.(dataTrajs{traji})(2,:,triali),D{piecei}.(dataTrajs{traji})(3,:,triali),maxlag,window,overlap))));
-            cor_vals(5+6*(triali-1),1,piecei)=max(max(abs(corrgram(D{piecei}.(dataTrajs{traji})(2,:,triali),D{piecei}.(dataTrajs{traji})(4,:,triali),maxlag,window,overlap))));
-            cor_vals(6+6*(triali-1),1,piecei)=max(max(abs(corrgram(D{piecei}.(dataTrajs{traji})(3,:,triali),D{piecei}.(dataTrajs{traji})(4,:,triali),maxlag,window,overlap))));
-
-            %cor_vals(1+6*(triali-1),1,piecei)=max(abs(corrgram(D{piecei}.(dataTrajs{traji})(1,:,triali),D{piecei}.(dataTrajs{traji})(2,:,triali),maxlag,window,overlap)),[],'all');
-            %cor_vals(2+6*(triali-1),1,piecei)=max(abs(corrgram(D{piecei}.(dataTrajs{traji})(1,:,triali),D{piecei}.(dataTrajs{traji})(3,:,triali),maxlag,window,overlap)),[],'all');
-            %cor_vals(3+6*(triali-1),1,piecei)=max(abs(corrgram(D{piecei}.(dataTrajs{traji})(1,:,triali),D{piecei}.(dataTrajs{traji})(4,:,triali),maxlag,window,overlap)),[],'all');
-            %cor_vals(4+6*(triali-1),1,piecei)=max(abs(corrgram(D{piecei}.(dataTrajs{traji})(2,:,triali),D{piecei}.(dataTrajs{traji})(3,:,triali),maxlag,window,overlap)),[],'all');
-            %cor_vals(5+6*(triali-1),1,piecei)=max(abs(corrgram(D{piecei}.(dataTrajs{traji})(2,:,triali),D{piecei}.(dataTrajs{traji})(4,:,triali),maxlag,window,overlap)),[],'all');
-            %cor_vals(6+6*(triali-1),1,piecei)=max(abs(corrgram(D{piecei}.(dataTrajs{traji})(3,:,triali),D{piecei}.(dataTrajs{traji})(4,:,triali),maxlag,window,overlap)),[],'all');
+            switch method_flag
+                case 1
+                    % lag is the same as the model order for gc
+                    % single trial-long window
+                    mcounter = 0;
+                    for row=1:4
+                        for col=1:4
+                            if col>row
+                                mcounter = mcounter + 1;
+                                [c,l]=xcov(D{piecei}.(dataTrajs{traji})(row,:,triali),D{piecei}.(dataTrajs{traji})(col,:,triali),morders(counter),'coef');
+                                cor_vals(mcounter+6*(triali-1),1,piecei)=abs(c(l==morders(counter)));
+                            end
+                        end
+                    end
+                case 0
+                    % max(A,[],'all') works from R2018b after.
+                    cor_vals(1+6*(triali-1),1,piecei)=max(max(abs(corrgram(D{piecei}.(dataTrajs{traji})(1,:,triali),D{piecei}.(dataTrajs{traji})(2,:,triali),maxlag,window,overlap))));
+                    cor_vals(2+6*(triali-1),1,piecei)=max(max(abs(corrgram(D{piecei}.(dataTrajs{traji})(1,:,triali),D{piecei}.(dataTrajs{traji})(3,:,triali),maxlag,window,overlap))));
+                    cor_vals(3+6*(triali-1),1,piecei)=max(max(abs(corrgram(D{piecei}.(dataTrajs{traji})(1,:,triali),D{piecei}.(dataTrajs{traji})(4,:,triali),maxlag,window,overlap))));
+                    cor_vals(4+6*(triali-1),1,piecei)=max(max(abs(corrgram(D{piecei}.(dataTrajs{traji})(2,:,triali),D{piecei}.(dataTrajs{traji})(3,:,triali),maxlag,window,overlap))));
+                    cor_vals(5+6*(triali-1),1,piecei)=max(max(abs(corrgram(D{piecei}.(dataTrajs{traji})(2,:,triali),D{piecei}.(dataTrajs{traji})(4,:,triali),maxlag,window,overlap))));
+                    cor_vals(6+6*(triali-1),1,piecei)=max(max(abs(corrgram(D{piecei}.(dataTrajs{traji})(3,:,triali),D{piecei}.(dataTrajs{traji})(4,:,triali),maxlag,window,overlap))));
+            end
         end
         label_cc=[dataTrajs{traji},'_cc'];
         D{piecei}.(label_cc)=cor_vals(:,:,piecei); 
