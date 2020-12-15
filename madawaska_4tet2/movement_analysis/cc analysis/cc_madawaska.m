@@ -65,7 +65,7 @@ for piecei = 1:numel(D)
                             if col>row
                                 mcounter = mcounter + 1;
                                 [c,l]=xcov(D{piecei}.(dataTrajs{traji})(row,:,triali),D{piecei}.(dataTrajs{traji})(col,:,triali),morders(counter),'coef');
-                                cor_vals(mcounter+6*(triali-1),1,piecei)=abs(c(l==morders(counter)));
+                                cor_vals(mcounter+6*(triali-1),1,piecei)=max(abs(c));
                             end
                         end
                     end
