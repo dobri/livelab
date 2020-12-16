@@ -10,12 +10,7 @@
 
 save_flag=0;
 figs_flag=1;
-save_wcc_fig=1;
-if save_wcc_fig==1
-    close all
-    figure('Position',[100 100 1600 800])
-    set(gcf,'visible','off')
-end
+save_wcc_fig=0;
 
 %Specify parameters
 %Which method are we going to use?
@@ -82,16 +77,18 @@ for piecei = 1:numel(D)
                     for row=1:4
                         for col=1:4
                             if col>row
-                                fcounter = fcounter + 1;
                                 [wcc,l,t]=corrgram(D{piecei}.(dataTrajs{traji})(row,:,triali),D{piecei}.(dataTrajs{traji})(col,:,triali),maxlag,window,overlap);
                                 cor_vals(fcounter+6*(triali-1),1,piecei)=max(max(abs(wcc)));
                                 if figs_flag
+                                    if save_wcc_fig == 1
+                                        set(gcf,'visible','off')
+                                    end
+                                    fcounter = fcounter + 1;
                                     subplot(2,3,fcounter)
                                     corrgram(D{piecei}.(dataTrajs{traji})(row,:,triali),D{piecei}.(dataTrajs{traji})(col,:,triali),maxlag,window,overlap)
                                     xtickangle(30)
                                     set(gca,'YTick',l(1:4:end))
-                                    set(gca,'YTickLabel',l(1:4:end)./sr)
-                                    ylabel('Lag, s')
+                                    set(gca,'YTickLabel',round(l(1:4:end)./sr))
                                     set(gca,'XTick',t(1:10:end))
                                     set(gca,'XTickLabel',round(t(1:10:end)./sr))
                                     xlabel('Time, s')
@@ -115,16 +112,12 @@ end
 
 if save_wcc_fig == 1
     set(gcf,'visible','on')
-    close all
 end
 
-figure
-for p=1:2
-    subplot(2,2,1+(p-1)*2)
-    boxplot(D{p}.X_processed_cc,reshape(meshgrid(1:8,1:6),1,[])')
-    subplot(2,2,2+(p-1)*2)
-    boxplot(D{p}.X_detrended_processed_cc,reshape(meshgrid(1:8,1:6),1,[])')
-end
+subplot(2,1,1)
+boxplot(D{piecei}.X_processed_cc,reshape(meshgrid(1:8,1:6),1,[])')
+subplot(2,1,2)
+boxplot(D{piecei}.X_detrended_processed_cc,reshape(meshgrid(1:8,1:6),1,[])')
 %save('D','D')
 
 
