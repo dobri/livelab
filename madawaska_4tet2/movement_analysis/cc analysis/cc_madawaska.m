@@ -19,7 +19,7 @@ end
 
 %Specify parameters
 %Which method are we going to use?
-switch 1
+switch 0
     case 0
         method_flag='wcc';
     case 1
@@ -171,16 +171,16 @@ for piecei = 1:numel(D)
                     for col=1:4
                         if col>row
                             fcounter = fcounter + 1;
-                            [wcc,l,t]=corrgram(D{piecei}.(dataTrajs{traji})(row,:,triali),D{piecei}.(dataTrajs{traji})(col,:,triali),maxlag,window,overlap);
+                            [wcc,l,t]=corrgram(D{piecei}.A{triali}(row,:),D{piecei}.A{triali}(col,:),maxlag,window,overlap);
                             cor_vals(fcounter+6*(triali-1),1,piecei)=max(max(abs(wcc)));
                             if figs_flag
                                 subplot(2,3,fcounter)
-                                corrgram(D{piecei}.(dataTrajs{traji})(row,:,triali),D{piecei}.(dataTrajs{traji})(col,:,triali),maxlag,window,overlap)
+                                corrgram(D{piecei}.A{triali}(row,:),D{piecei}.A{triali}(col,:),maxlag,window,overlap)
                                 xtickangle(30)
                                 set(gca,'YTick',l(1:4:end))
                                 set(gca,'YTickLabel',l(1:4:end)./sr)
                                 ylabel('Lag, s')
-                                set(gca,'XTick',t(1:10:end))
+                                set(gca,'XTick',t(1:100:end))
                                 set(gca,'XTickLabel',round(t(1:10:end)./sr))
                                 xlabel('Time, s')
                             end
@@ -189,7 +189,7 @@ for piecei = 1:numel(D)
                 end
                 if figs_flag
                     if save_wcc_fig == 1 % print to file
-                        print(gcf,'-dpng','-r300','-loose',['wcc_' 'score' num2str(piecei) '_dim' num2str(traji) '_tr' num2str(triali) '_' datestr(now,'yymmdd-HHMMSS') '.png']);
+                        print(gcf,'-dpng','-r300','-loose',['wcc_' 'score' num2str(piecei) '_tr' num2str(triali) '_' datestr(now,'yymmdd-HHMMSS') '.png']);
                     else
                         pause % just inspect on the screen
                     end
