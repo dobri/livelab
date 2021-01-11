@@ -55,7 +55,7 @@ for piecei = 1:numel(D)
                 window=length(D{piecei}.(dataTrajs{traji})); %Whole length of the piece. 
                 overlap=0; %No overlap
             case 'wcc'
-                maxlag=round(max_lag*sr); % 1 second
+                maxlag=round(max_lag*sr); % 2 seconds
                 window=round(win_len*sr); % 5 seconds 
                 overlap=round(window/5); % half a window overlap
         end
@@ -142,7 +142,8 @@ for piecei = 1:numel(D)
             window=length(D{piecei}.A); %Whole length of the piece. Dobri suggests not to use this. Will discuss.
             overlap=0; %No overlap
         case 'wcc'
-            maxlag=round(max_lag*sr); % 1 second
+            sr = 100; % Hz. 
+            maxlag=round(max_lag*sr); % 2 seconds
             window=round(win_len*sr); % 5 seconds 
             overlap=round(window/5); % half a window overlap
     end
@@ -177,11 +178,11 @@ for piecei = 1:numel(D)
                                 subplot(2,3,fcounter)
                                 corrgram(D{piecei}.A{triali}(row,:),D{piecei}.A{triali}(col,:),maxlag,window,overlap)
                                 xtickangle(30)
-                                set(gca,'YTick',l(1:4:end))
-                                set(gca,'YTickLabel',l(1:4:end)./sr)
+                                set(gca,'YTick',l(1:20:end))
+                                set(gca,'YTickLabel',l(1:20:end)./sr)
                                 ylabel('Lag, s')
-                                set(gca,'XTick',t(1:100:end))
-                                set(gca,'XTickLabel',round(t(1:10:end)./sr))
+                                set(gca,'XTick',t(1:8:end))
+                                set(gca,'XTickLabel',round(t(1:8:end)./sr))
                                 xlabel('Time, s')
                             end
                         end
