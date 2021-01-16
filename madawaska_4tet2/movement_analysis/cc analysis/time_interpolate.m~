@@ -1,0 +1,14 @@
+function time_out = time_interpolate(time_in,checkpoints)
+
+if size(time_in,2)>size(time_in,1)
+    time_in=time_in';
+end
+
+time_out = time*0;
+[~,ind] = min(time_in-checkpoints(1));
+time_out(1:ind) = linspace(0,checkpoints(1),ind);
+for tt=1:numel(checkpoints)
+end
+[~,ind] = min(time_in-checkpoints(end));
+time_out(ind+1:end) = linspace(checkpoints(),ind);
+time_out(1:ind) = linspace(0,checkpoints(1),ind);

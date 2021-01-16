@@ -10,7 +10,7 @@
 
 save_flag=0;
 figs_flag=1;
-save_wcc_fig=1;
+save_wcc_fig=0;
 if save_wcc_fig==1
     close all
     figure('Position',[100 100 800*6 800])
@@ -30,7 +30,7 @@ if strcmp(method_flag,'wcc')
     sr8 = 8; % Hz. After downsampling?
     sr100 = 100;
     win_len = 5; % seconds
-    max_lag = 2; % seconds
+    max_lag = 1; % seconds
 end
 num_trials = size(D{1}.(dataTrajs{1}),3);
 
@@ -115,14 +115,9 @@ for piecei = 1:numel(D)
                                     %corrgram(D{piecei}.(dataTrajs{traji})(row,:,triali),D{piecei}.(dataTrajs{traji})(col,:,triali),maxlag,window,overlap)
                                     imagesc(tn,l,flip(wcc),[-1 1]);colorbar
                                     xtickangle(30)
-                                    colorbar off
-                                    %if fcounter~=6
-                                    %    colorbar off
-                                    %end
                                     if fcounter==1
-                                        lags_show = unique(sort([0;l(1);l(end);l(1:(sr/4):end)]));
-                                        set(gca,'YTick',lags_show)
-                                        set(gca,'YTickLabel',flipud(lags_show./sr))
+                                        set(gca,'YTick',unique(sort([0;l(1);l(end);l(1:(sr/4):end)])))
+                                        set(gca,'YTickLabel',flipud(unique(sort([0;l(1:4:end)]))./sr))
                                         ylabel('Lag, s')
                                     else
                                         set(gca,'YTick',[])

@@ -13,7 +13,7 @@ figs_flag=1;
 save_wcc_fig=1;
 if save_wcc_fig==1
     close all
-    figure('Position',[100 100 800*6 800])
+    figure('Position',[100 100 1600 800])
     set(gcf,'visible','off')
 end
 
@@ -27,50 +27,40 @@ switch 0
 end
 
 if strcmp(method_flag,'wcc')
-    sr8 = 8; % Hz. After downsampling?
-    sr100 = 100;
+    sr = 8; % Hz. After downsampling?
     win_len = 5; % seconds
     max_lag = 2; % seconds
 end
-num_trials = size(D{1}.(dataTrajs{1}),3);
 
 if strcmp(method_flag,'cc_and_gcorder')
     morders=[D{1}.X_processed_morder,D{1}.X_detrended_processed_morder,...
     D{2}.X_processed_morder,D{2}.X_detrended_processed_morder];
 end
 
-dataTrajs={'X_processed','X_detrended_processed','A'};
+dataTrajs={'X_processed','X_detrended_processed'};
 
 %% CC analysis - position data
 counter=0;
 for piecei = 1:numel(D)
     for traji = 1:numel(dataTrajs)
-        switch dataTrajs{traji}
-            case 'A'
-                sr = sr100;
-            otherwise
-                sr = sr8;
-        end
-        
         % Preallocate vector to store correlation coefficients
-        % cor_vals=zeros(6*size(D{piecei}.(dataTrajs{traji}),3),1,numel(D)); % there's something weird here.
-        cor_vals = [];
+        cor_vals=zeros(6*size(D{piecei}.(dataTrajs{traji}),3),1,numel(D));
         
         % Specify the same parameters that Andrew used
-        counter = counter+1;
+        counter=counter+1;
         
         switch method_flag
             case 'cc_and_gcorder'
                 maxlag = morders(counter); %lag is the same as the model order for gc
-                window=length(D{piecei}.(dataTrajs{traji})); %Whole length of the piece.
+                window=length(D{piecei}.(dataTrajs{traji})); %Whole length of the piece. 
                 overlap=0; %No overlap
             case 'wcc'
                 maxlag=round(max_lag*sr); % 2 seconds
-                window=round(win_len*sr); % 5 seconds
-                overlap=round(window/2); % half a window overlap
+                window=round(win_len*sr); % 5 seconds 
+                overlap=round(window/5); % half a window overlap
         end
-        
-        for triali=1:num_trials
+
+        for triali=1:size(D{piecei}.(dataTrajs{traji}),3)
             %take the maximum unsigned CC coefficient for each of the 6 possible
             %pairs of musicians for each trial
             switch method_flag
@@ -82,8 +72,8 @@ for piecei = 1:numel(D)
                         for col=1:4
                             if col>row
                                 mcounter = mcounter + 1;
-                                [c,l]=xcov(D{piecei}.(dataTrajs{traji})(row,:,triali),D{piecei}.(dataTrajs{traji})(col,:,triali),morders(counter),'coef'); %only thing I'm not sure about is 'coef' - normalizes the sequence
-                                cor_vals(mcounter+6*(triali-1),1,piecei)=max(abs(c));
+                                [c,l]=xcov(D{piecei}.(dataTrajs{traji})(row,:,triali),D{piecei}.(dataTrajs{traji})(col,:,triali),morders(counter),'coef'); %only thing I'm not sure about is 'coef' - normalizes the sequence 
+                                cor_vals(mcounter+6*(triali-1),1,piecei)=max(abs(c)); 
                             end
                         end
                     end
@@ -94,70 +84,31 @@ for piecei = 1:numel(D)
                         for col=1:4
                             if col>row
                                 fcounter = fcounter + 1;
-                                if traji==3
-                                    x = D{piecei}.A{triali}(row,:)';
-                                    y = D{piecei}.A{triali}(col,:)';
-                                else
-                                    x = D{piecei}.(dataTrajs{traji})(row,:,triali);
-                                    y = D{piecei}.(dataTrajs{traji})(col,:,triali);
-                                end
-                                [wcc,l,t]=corrgram(x,y,maxlag,window,overlap);
+                                [wcc,l,t]=corrgram(D{piecei}.(dataTrajs{traji})(row,:,triali),D{piecei}.(dataTrajs{traji})(col,:,triali),maxlag,window,overlap);
                                 cor_vals(fcounter+6*(triali-1),1,piecei)=max(max(abs(wcc)));
                                 if figs_flag
-                                    switch 0
-                                        case 0
-                                            salient_points = (30:30:max(t/sr))';
-                                        case 1
-                                            % Insert here a line to read a clicktrack from a text file such as the marked labels exported from Audacity.
-                                    end
-                                    tn = time_interpolate(t./sr,salient_points); % This makes a pseudo-time vector.
-                                    subplot(num_trials,6,fcounter+6*(triali-1))
-                                    %corrgram(D{piecei}.(dataTrajs{traji})(row,:,triali),D{piecei}.(dataTrajs{traji})(col,:,triali),maxlag,window,overlap)
-                                    imagesc(tn,l,flip(wcc),[-1 1]);colorbar
+                                    subplot(2,3,fcounter)
+                                    corrgram(D{piecei}.(dataTrajs{traji})(row,:,triali),D{piecei}.(dataTrajs{traji})(col,:,triali),maxlag,window,overlap)
                                     xtickangle(30)
-                                    colorbar off
-                                    %if fcounter~=6
-                                    %    colorbar off
-                                    %end
-                                    if fcounter==1
-                                        lags_show = unique(sort([0;l(1);l(end);l(1:(sr/4):end)]));
-                                        set(gca,'YTick',lags_show)
-                                        set(gca,'YTickLabel',flipud(lags_show./sr))
-                                        ylabel('Lag, s')
-                                    else
-                                        set(gca,'YTick',[])
-                                        ylabel('')
-                                    end
-                                    set(gca,'XTick',1:numel(salient_points))
-                                    %set(gca,'XTick',t(1:10:end))
-                                    %set(gca,'XTickLabel',round(t(1:10:end)./sr))
-                                    %if triali==size(D{piecei}.(dataTrajs{traji}),3)
-                                    %    xlabel('Time [seconds or sections]')
-                                    %end
-                                    if triali==1
-                                        title(['Pair ' num2str(row) '-' num2str(col)])
-                                    else
-                                        title('')
-                                    end
+                                    set(gca,'YTick',l(1:4:end))
+                                    set(gca,'YTickLabel',l(1:4:end)./sr)
+                                    ylabel('Lag, s')
+                                    set(gca,'XTick',t(1:10:end))
+                                    set(gca,'XTickLabel',round(t(1:10:end)./sr))
+                                    xlabel('Time, s')
                                 end
                             end
                         end
                     end
+                    if figs_flag
+                        if save_wcc_fig == 1 % print to file
+                            print(gcf,'-dpng','-r300','-loose',['wcc_' 'score' num2str(piecei) '_dim' num2str(traji) '_tr' num2str(triali) '_' datestr(now,'yymmdd-HHMMSS') '.png']);
+                        else
+                            pause % just inspect on the screen
+                        end
+                    end
             end
         end
-        
-        if figs_flag
-            if save_wcc_fig == 1 % print to file
-                set(gca(), 'LooseInset', get(gca(), 'TightInset'));
-                %print(gcf,'-dpng','-r300','-loose',['wcc_' 'score' num2str(piecei) '_dim' num2str(traji) ...
-                %    '_tr' num2str(triali) '_' datestr(now,'yymmdd-HHMMSS') '.png']);
-                print(gcf,'-dpng','-r100','-loose',['wcc_' 'score' num2str(piecei) '_dim' num2str(traji) ...
-                    '_' datestr(now,'yymmdd-HHMMSS') '.png']);
-            else
-                pause % just inspect on the screen
-            end
-        end
-
         label_cc=[dataTrajs{traji},'_',method_flag];
         D{piecei}.(label_cc)=cor_vals(:,:,piecei);
     end
@@ -167,8 +118,6 @@ if save_wcc_fig == 1
     set(gcf,'visible','on')
     close all
 end
-
-return 
 
 figure
 for p=1:2
@@ -241,7 +190,7 @@ for piecei = 1:numel(D)
                 end
                 if figs_flag
                     if save_wcc_fig == 1 % print to file
-                        print(gcf,'-dpng','-r100','-loose',['wcc_' 'score' num2str(piecei) '_tr' num2str(triali) '_' datestr(now,'yymmdd-HHMMSS') '.png']);
+                        print(gcf,'-dpng','-r300','-loose',['wcc_' 'score' num2str(piecei) '_tr' num2str(triali) '_' datestr(now,'yymmdd-HHMMSS') '.png']);
                     else
                         pause % just inspect on the screen
                     end
