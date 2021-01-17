@@ -10,7 +10,7 @@
 
 save_flag=0;
 figs_flag=1;
-save_wcc_fig=1;
+save_wcc_fig=0;
 if save_wcc_fig==1
     close all
     figure('Position',[100 100 800*6 800])
@@ -32,7 +32,7 @@ if strcmp(method_flag,'wcc')
     win_len = 5; % seconds
     max_lag = 2; % seconds
 end
-num_trials = size(D{1}.(dataTrajs{1}),3);
+num_trials = numel(D{1}.A);
 
 if strcmp(method_flag,'cc_and_gcorder')
     morders=[D{1}.X_processed_morder,D{1}.X_detrended_processed_morder,...
@@ -71,6 +71,15 @@ for piecei = 1:numel(D)
         end
         
         for triali=1:num_trials
+            switch 0
+                case 0
+                    %salient_points = (30:30:max(t/sr))';
+                    salient_points = cumsum(randi(10,10,1)+30-5);
+                case 1
+                    % Insert here a line to read a clicktrack from a text file such as the marked labels exported from Audacity.
+                    % salient_points = csvread....
+            end
+            
             %take the maximum unsigned CC coefficient for each of the 6 possible
             %pairs of musicians for each trial
             switch method_flag
@@ -104,15 +113,13 @@ for piecei = 1:numel(D)
                                 [wcc,l,t]=corrgram(x,y,maxlag,window,overlap);
                                 cor_vals(fcounter+6*(triali-1),1,piecei)=max(max(abs(wcc)));
                                 if figs_flag
-                                    switch 0
-                                        case 0
-                                            salient_points = (30:30:max(t/sr))';
-                                        case 1
-                                            % Insert here a line to read a clicktrack from a text file such as the marked labels exported from Audacity.
-                                    end
-                                    tn = time_interpolate(t./sr,salient_points); % This makes a pseudo-time vector.
-                                    subplot(num_trials,6,fcounter+6*(triali-1))
+                                    % This makes a pseudo-time vector that 
+                                    % runs in units of time defined by the 
+                                    % time points in the salient_points vector.
+                                    tn = time_interpolate(t./sr,salient_points); 
+
                                     %corrgram(D{piecei}.(dataTrajs{traji})(row,:,triali),D{piecei}.(dataTrajs{traji})(col,:,triali),maxlag,window,overlap)
+                                    subplot(num_trials,6,fcounter+6*(triali-1))
                                     imagesc(tn,l,flip(wcc),[-1 1]);colorbar
                                     xtickangle(30)
                                     colorbar off
