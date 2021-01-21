@@ -107,13 +107,14 @@ end
 % It seems that head markers were perfectly recorded, at least for piece1.
 % The head markers have some missing values for trials 6 and 8 in piece 2.
 
+return
 
 %% To confirm the data looks OK set the flag to 1 and run an animated plot.
 plotting_video_flag = 1;
 if plotting_video_flag == 1
     for tr = 1:numel(DATA)
         fprintf('%s\n',DATA{tr}.filename)
-        plot_animated_in_3d(DATA{tr}.X)
+        plot_animated_in_3d(DATA{tr}.X,100,1)
         pause
     end
 end
