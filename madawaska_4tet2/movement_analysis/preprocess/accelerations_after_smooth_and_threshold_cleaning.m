@@ -12,19 +12,19 @@ dt = 1./sf;
 % would make the average jump up/down by a few mm.
 % Some glitches in the raw 3D cause huge differences in v.
 % It's easier to pre-smooth X before v, rather than to clean v.
-V0 = [[0 0 0];diff(X)];
+V0 = [[0 0 0];diff(X)]./dt;
+spikes = any(abs(V0)>1e3,2);
 V = V0;
+V(spikes,:)=nan;
 for d=1:size(V0,2)
+    V(:,d) = fill_nans_by_lin_interp(V(:,d));
     % Smooth by a third of a second. With the mov ave method this
     % kills everything above 3 Hz. With sgolay above 5 Hz.
     V(:,d) = smooth(V(:,d),round(sf/3),'sgolay');
 end
-V = V./dt;
-V0 = V0./dt;
 SigmaV = dot(V,V,2).^.5;
 
-A0 = [[0 0 0];diff(V)];
-A0 = A0./dt;
+A0 = [[0 0 0];diff(V)]./dt;
 spikes = any(abs(A0)>10e3,2);
 A = A0;
 A(spikes,:)=nan;
