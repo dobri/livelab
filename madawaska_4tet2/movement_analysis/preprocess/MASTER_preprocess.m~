@@ -151,10 +151,8 @@ end
 
 
 %% Nicely looking 3D multi-trial, multi-body video.
-if 0
-    wanted_head_markers_all = {'hat0','scroll1','backl','spine1','backr','elbowl','wristl','handl','elbowr','wristr','handr','bow1','bow2','boutr','boutl'};
-    plot_4x8_animated_in_3d(DATA,bodies_labels,wanted_head_markers_all,100);
-end
+wanted_head_markers_all = {'hat0','scroll1','backl','spine1','backr','elbowl','wristl','handl','elbowr','wristr','handr','bow1','bow2','boutr','boutl'};
+plot_4x8_animated_in_3d(DATA,bodies_labels,wanted_head_markers_all,100);
 
 
 %% Here we do cleaning, nan-filling, detrending, zero-center, etc..
@@ -176,7 +174,7 @@ end
 
 
 %% Speed and total acc of head movement.
-% Most of this was moved inside accelerations_after_smooth_and_threshold_cleaning
+% Most of this was moved to 
 if 0
     wanted_head_markers = {'hat0','hat1','hat2','hat3'};
     for tr = 1:numel(DATA)
@@ -248,16 +246,14 @@ end
 
 
 %% Save the whole DATA structure to a mat file.
-if 0
-    save(fullfile(data_folder,['DATA_piece' which_piece(end) '.mat']),'DATA','-v7.3')
-end
+% save(fullfile(data_folder,['DATA_piece' which_piece(end) '.mat']),'DATA','-v7.3')
 
 
-%% 
+
+%% ... What other movement variables with reduced dimension should we use?
 % v AP sway (front-back). (Y-axis in the rotated data).
 % v MSD or speed. (Do that!)
 % x PCA? (Probably not necessary here to fine-tune beyond ML and AP. We know that PC1 and PC2 will correspond closely to the AP and ML axes.)
 % x The thing from quaternions? (No time for that.)
 % v ACCELERATION
-%
-% ... What other movement variables with reduced dimension should we use?
+
