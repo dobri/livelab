@@ -56,6 +56,37 @@ end
 bodies_labels = {'violin1','violin2','viola','cello'};
 
 
+%% Acceleration.
+% It's better to take it before any other pre-processing, otherwise the
+% double-differencing amplifies all artefacts of the data (shifted markers)
+% AND of the processing operations applied to the raw data. You end up 
+% with a really bad mess. On the other hand, in theory it should be easy to
+% detect and remove these artefacts in the acceleration. So this is a
+% separate pre-processing pipeline, just for the acceleration.
+wanted_head_markers = {'hat0','hat1','hat2','hat3'};
+for tr = 1:numel(DATA)
+    DATA{tr}.t = (1:size(DATA{tr}.X,1))'./DATA{tr}.sf;
+    for b = 1:numel(bodies_labels)
+        % Find the indices of the needed markers.
+        marker_index = zeros(1,numel(wanted_head_markers));
+        for m = 1:numel(DATA{tr}.col_names)
+            for marker = 1:numel(marker_index)
+                if strcmp(DATA{tr}.col_names{m},[bodies_labels{b} wanted_head_markers{marker}])
+                    marker_index(marker) = m;
+                end
+            end
+        end
+        % If no markers for this body are found.
+        if all(marker_index==0)
+            continue
+        end
+        
+        [DATA{tr}.A(:,b),DATA{tr}.V(:,b)] = accelerations_after_smooth_and_threshold_cleaning(DATA{tr}.X(:,:,marker_index),DATA{tr}.sf,DATA{tr}.t,plotting_flag);
+        if plotting_flag==1;pause;end
+    end
+end
+
+
 %% Should we rotate the bodies so that the AP and ML axes correspond to Y 
 % and X axes in the data frame, respectively?
 target_vector = [-1 0];
@@ -107,10 +138,9 @@ end
 % It seems that head markers were perfectly recorded, at least for piece1.
 % The head markers have some missing values for trials 6 and 8 in piece 2.
 
-return
 
 %% To confirm the data looks OK set the flag to 1 and run an animated plot.
-plotting_video_flag = 1;
+plotting_video_flag = 0;
 if plotting_video_flag == 1
     for tr = 1:numel(DATA)
         fprintf('%s\n',DATA{tr}.filename)
@@ -121,8 +151,10 @@ end
 
 
 %% Nicely looking 3D multi-trial, multi-body video.
-wanted_head_markers_all = {'hat0','scroll1','backl','spine1','backr','elbowl','wristl','handl','elbowr','wristr','handr','bow1','bow2','boutr','boutl'};
-% plot_4x8_animated_in_3d(DATA,bodies_labels,wanted_head_markers_all,100);
+if 0
+    wanted_head_markers_all = {'hat0','scroll1','backl','spine1','backr','elbowl','wristl','handl','elbowr','wristr','handr','bow1','bow2','boutr','boutl'};
+    plot_4x8_animated_in_3d(DATA,bodies_labels,wanted_head_markers_all,100);
+end
 
 
 %% Here we do cleaning, nan-filling, detrending, zero-center, etc..
@@ -143,72 +175,89 @@ for tr = 1:numel(DATA)
 end
 
 
-%% Speed of head movement. MSD?
-for tr = 1:numel(DATA)
-    for b = 1:numel(bodies_labels)
-        % Find the indices of the needed markers.
-        marker_index = zeros(1,numel(wanted_head_markers));
-        for m = 1:numel(DATA{tr}.col_names)
-            for marker = 1:numel(marker_index)
-                if strcmp(DATA{tr}.col_names{m},[bodies_labels{b} wanted_head_markers{marker}])
-                    marker_index(marker) = m;
+%% Speed and total acc of head movement.
+% Most of this was moved inside accelerations_after_smooth_and_threshold_cleaning
+if 0
+    wanted_head_markers = {'hat0','hat1','hat2','hat3'};
+    for tr = 1:numel(DATA)
+        for b = 1:numel(bodies_labels)
+            % Find the indices of the needed markers.
+            marker_index = zeros(1,numel(wanted_head_markers));
+            for m = 1:numel(DATA{tr}.col_names)
+                for marker = 1:numel(marker_index)
+                    if strcmp(DATA{tr}.col_names{m},[bodies_labels{b} wanted_head_markers{marker}])
+                        marker_index(marker) = m;
+                    end
                 end
             end
+            
+            % If no markers for this body are found.
+            if all(marker_index==0)
+                continue
+            end
+            
+            % Extract the 3D values of these markers.
+            X = DATA{tr}.X(:,:,marker_index);
+            
+            % We don't actually need all four head markers. %X = X(:,:,1);
+            % If there are issues with missing, you can try averaging across
+            % them to smooth the data a little.
+            X = nanmean(X,3);
+            
+            dt = 1/DATA{tr}.sf;
+            % Also, verify that some markers do not disappear a lot, which
+            % would make the average jump up/down by a few mm.
+            % Some glitches in the raw 3D cause huge differences in v.
+            % It's easier to pre-smooth X before v, rather than to clean v.
+            v_temp = [0;dot(diff(X),diff(X),2).^.5./dt];
+            X(logical((v_temp>3e2).*([0;abs(diff(v_temp))>1e2])),:)=nan;
+            for d=1:3
+                X(:,d) = fill_nans_by_lin_interp(X(:,d));
+                % Smooth by a third of a second. With the mov ave method this
+                % kills everything above 3 Hz. With sgolay above 5 Hz.
+                X(:,d) = smooth(X(:,d),round(DATA{tr}.sf/3),'sgolay');
+            end
+            
+            % The speed, excluding some in and out window.
+            v = [0;dot(diff(X),diff(X),2).^.5./dt];
+            v([1:300 end-299:end]) = 0;
+            DATA{tr}.V(:,b) = v;
+            
+            % Acceleration
+            a = [0;0;dot(diff(diff(X)),diff(diff(X)),2).^.5./dt./dt];
+            a([1:300 end-299:end]) = 0;
+            DATA{tr}.A(:,b) = a;
+            
+            % Verify that there aren't spikes and nans remaining by accident.
+            % Did we do a good job cleaning and filtering without killing v?
+            % Compare v_temp (pure diff) w/ v after rem nans, lin interp, smooth.
+            clf
+            subplot(4,1,1)
+            plot(DATA{tr}.X(:,:,marker_index(2)));
+            subplot(4,1,2)
+            plot(X);
+            subplot(4,1,3)
+            plot([v_temp DATA{tr}.V(:,b)],'-o')
+            subplot(4,1,4)
+            plot(DATA{tr}.A(:,b),'-o')
+            
+            pause
         end
-        
-        % If no markers for this body are found.
-        if all(marker_index==0)
-            continue
-        end
-        
-        % Extract the 3D values of these markers.
-        X = DATA{tr}.X(:,:,marker_index);
-        
-        % We don't actually need all four head markers. %X = X(:,:,1);
-        % If there are issues with missing, you can try averaging across
-        % them to smooth the data a little.
-        X = nanmean(X,3);
-        
-        % Also, verify that some markers do not disappear a lot, which 
-        % would make the average jump up/down by a few mm.
-        % Some glitches in the raw 3D cause huge differences in v.
-        % It's easier to pre-smooth X before v, rather than to clean v.
-        v_temp = [0;dot(diff(X),diff(X),2).^.5./(1/DATA{tr}.sf)];
-        X(logical((v_temp>3e2).*([0;abs(diff(v_temp))>1e2])),:)=nan;
-        for d=1:3
-            X(:,d) = fill_nans_by_lin_interp(X(:,d));
-            % Smooth by a third of a second. With the mov ave method this
-            % kills everything above 3 Hz. With sgolay above 5 Hz.
-            X(:,d) = smooth(X(:,d),round(DATA{tr}.sf/3),'sgolay');
-        end
-        
-        % The speed, excluding some in and out window.
-        v = [0;dot(diff(X),diff(X),2).^.5./(1/DATA{tr}.sf)];
-        v([1:300 end-299:end]) = 0;
-        DATA{tr}.V(:,b) = v;
-        
-        % Verify that there aren't spikes and nans remaining by accident.
-        % Did we do a good job cleaning and filtering without killing v?
-        clf
-        subplot(1,3,1)
-        plot(DATA{tr}.X(:,:,marker_index(2)));
-        subplot(1,3,2)
-        plot(X);
-        subplot(1,3,3)
-        plot([v_temp DATA{tr}.V(:,b)])
-        pause
     end
 end
 
+
 %% Save the whole DATA structure to a mat file.
-% save(fullfile(data_folder,['DATA_piece' which_piece(end) '.mat']),'DATA','-v7.3')
+if 0
+    save(fullfile(data_folder,['DATA_piece' which_piece(end) '.mat']),'DATA','-v7.3')
+end
 
 
-
-%% ... What other movement variables with reduced dimension should we use?
+%% 
 % v AP sway (front-back). (Y-axis in the rotated data).
 % v MSD or speed. (Do that!)
 % x PCA? (Probably not necessary here to fine-tune beyond ML and AP. We know that PC1 and PC2 will correspond closely to the AP and ML axes.)
 % x The thing from quaternions? (No time for that.)
-% ACCELERATION
-
+% v ACCELERATION
+%
+% ... What other movement variables with reduced dimension should we use?
