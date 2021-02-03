@@ -25,6 +25,7 @@ end
 SigmaV = dot(V,V,2).^.5;
 
 A0 = [[0 0 0];diff(V)]./dt;
+%A0 = [[0 0 0];diff(V0)]./dt; to see some of the discontinuities.
 spikes = any(abs(A0)>10e3,2);
 A = A0;
 A(spikes,:)=nan;
