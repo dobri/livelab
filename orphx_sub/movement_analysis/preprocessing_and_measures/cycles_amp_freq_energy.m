@@ -116,6 +116,7 @@ if plotting>0
         plot(t(locs2{d}),x(locs2{d},d),'^','linewidth',2)
     end
     hold off
+    title('Mark the cycles in the data')
 
     subplot(3,1,2)
     plot(t,period_as_ts,'linewidth',2)
@@ -123,9 +124,11 @@ if plotting>0
     plot(t,amplit_as_ts,'linewidth',2)
     plot(t,oscillatory*10,'linewidth',2)
     hold off
+    title('Ongoing period and amplitude')
 
     subplot(3,1,3)
     plot(t,H,'linewidth',2)
+    title('H Energy')
     
     if plotting == 1
         pause

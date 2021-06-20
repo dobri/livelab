@@ -2,9 +2,6 @@ function [D_detrended_2,The_trend] = removal_of_nonstation_splines(D,sf,t,ds,smo
 %%removal_of_nonstation_splines
 % D is nxdxk array, where n is number of samples, d is dimension (1:3), and
 % k is number of markers, or participants, or whatever else is the unit.
-% start with addpath('/home/dobri/mcmc/orphx/manalysis/...')
-% and
-% [D,sf,IDS_num,IDS_str] = import_orphx_set_saved_as_dot_tsv();
 
 if isempty(ds)
     ds=1e2;
@@ -15,7 +12,7 @@ end
 if isempty(t)
     t = (1:size(D,1))'./sf;
 end
-if isempty(t)
+if isempty(plotting_flag)
     plotting_flag = 1;
 end
 
