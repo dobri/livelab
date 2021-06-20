@@ -17,14 +17,40 @@ imageDirectory<-"/Users/emilywood/desktop/r/madawaska'"
 options(max.print=1000000)
 
 
-##READ IN DATA
+##READ IN CC DATA
+#position cc data
 cc_pos<-read.csv("mada_cc_position.csv", header = TRUE,na.strings = c("", "NA"))
+#detrended position cc data
 cc_pos_dt<-read.csv("mada_cc_position_detrended.csv", header = TRUE,na.strings = c("", "NA"))
+#acceleration cc data
 cc_a<-read.csv("mada_cc_A.csv", header = TRUE,na.strings = c("", "NA"))
 
 head(cc_pos)
 head(cc_pos_dt)
 head(cc_a)
+
+
+#read in rating/averages data
+avgs<-read.csv("mada_avgs.csv", header = TRUE,na.strings = c("", "NA"))
+head(avgs)
+
+#Correlations between average group gc and wcc and  performance ratings. 
+#Check data
+boxplot(avgs$wcc)
+boxplot(avgs$gc)
+boxplot(avgs$quality)
+#Using Spearman because the performance quality ratings look wonky
+
+cor.test(avgs$wcc,avgs$gc,method="spearman",exact=FALSE)
+#sig negative relationship between average wcc and average gc
+
+cor.test(avgs$wcc,avgs$quality,method="spearman",exact=FALSE)
+#sig positive relationship between average wcc and performers' average ratings of performance quality
+plot(avgs$wcc,avgs$quality)
+
+cor.test(avgs$gc,avgs$quality,method="spearman",exact=FALSE)
+#no relationship between average gc and performance quality ratings
+
 
 ##FACTORING
 cc_pos$condition = factor(cc_pos$condition)
@@ -40,7 +66,9 @@ cc_a$piece<-factor(cc_a$piece, ordered=TRUE)
 cc_a$pair<-factor(cc_a$pair, ordered=TRUE)
 
 
-#First, we'll analyse acceleration
+
+#First, let's analyse acceleration, lines 70-180ish
+#analysis of position starts around 180
 #Dobri's plots showing individual slopes
 g <- vector("list",4)
 for (p in seq(1,2)) { #piece 1 and 2
@@ -82,12 +110,10 @@ print(g[4]) #p2,c2 (e)
 
 
 
-#PLOT
+#more plots, just showing average line
 
 mada1<-cc_a[which(cc_a$piece==1),]
 mada2<-cc_a[which(cc_a$piece==2),]
-
-#three ways of plotting
 
 (cc_p1_a<-ggplot(data=mada1, aes(x=trial, y=wcc, color=condition)) +
     stat_summary(fun.y = mean, geom = "point", size=4)+
@@ -148,12 +174,13 @@ m05=lmer(wcc ~ 1 + trial*condition*piece + (1|pair),data=cc_a,REML=0)
 
 anova(m00,m01,m02,m03,m04,m05)
 
-summary(m02)
+#uh oh.. I get an error for each model 'boundary (singular) fit'
+#I don't know how to deal with this so will come back to it later.
 
 
 
-#now analyse position
-
+#Let's look at the position data
+#Dobri's plots
 g <- vector("list",4)
 for (p in seq(1,2)) { #piece 1 and 2
   for (c in seq(1,2)) { #condition 1 and 2
@@ -194,12 +221,10 @@ print(g[4]) #p2,c2 (e)
 
 
 
-#PLOT
-
+#PLOT average lines
 
 mada1<-cc_pos[which(cc_pos$piece==1),]
 mada2<-cc_pos[which(cc_pos$piece==2),]
-
 
 (cc_p1_pos<-ggplot(data=mada1, aes(x=trial, y=wcc, color=condition)) +
     stat_summary(fun.y = mean, geom = "point", size=4)+
@@ -207,7 +232,7 @@ mada2<-cc_pos[which(cc_pos$piece==2),]
     stat_summary(fun.data = mean_se, geom = "errorbar", width = 0.2) + 
     scale_color_manual(values=c('firebrick4', 'goldenrod1'))+
     labs(x = "Trial", y = "Correlational-coupling (r)", color="Playing style")+
-    #ggtitle("Effect of playing style over time on overall \ngranger-coupling (causal density)")+
+    #ggtitle("Effect of playing style over time on overall \ncorrelational-coupling")+
     theme_bw()+
     scale_x_continuous(limits=c(1, 8), breaks=seq(1,8,1))+
     #scale_y_continuous(limits=c(0.005, 0.015)) +
@@ -254,12 +279,32 @@ mada2<-cc_pos[which(cc_pos$piece==2),]
 #stats
 m00=lmer(wcc ~ 1 + (1|pair),data=cc_pos,REML=0)
 m01=lmer(wcc ~ 1 + trial + (1|pair),data=cc_pos,REML=0)
+m02=lmer(wcc ~ 1 + trial + (1+trial|pair),data=cc_pos,REML=0)
+#get boundary fit problem, so I'm going to drop  trial|pair
 m02=lmer(wcc ~ 1 + trial + piece + (1|pair),data=cc_pos,REML=0) 
 m03=lmer(wcc ~ 1 + trial+condition + piece + (1|pair),data=cc_pos,REML=0) 
 m04=lmer(wcc ~ 1 + trial*condition + piece + (1|pair),data=cc_pos,REML=0) 
 m05=lmer(wcc ~ 1 + trial*condition*piece + (1|pair),data=cc_pos,REML=0)  
 
+
 anova(m00,m01,m02,m03,m04,m05)
+
+summary(m02)
+#wcc significantly increases across trial b=.002 
+#wcc is significantly higher in piece 2 than piece 1
+
+#check linearity
+plot(resid(m02),cc_pos$wcc)
+#doesn't look like it passes lienarity...
+#Shouldn't these look more random? So can I even run this LME? I think I'm violating an assumption here. 
+
+#check homogeneity
+plot(m02)
+
+#check residuals
+require("lattice")
+qqmath(m02)
+qqnorm(resid(m02))
 
 
 
