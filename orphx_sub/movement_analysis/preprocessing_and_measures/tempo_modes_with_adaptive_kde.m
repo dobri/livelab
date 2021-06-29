@@ -70,24 +70,8 @@ if plotting_flag==3
     figure(3)
     bar(bins,counts)
     hold on
-    plot(dmesh,kpd_rescaled./max(pks)*max(counts),'-r','linewidth',2); %*numel(x)
-    plot(locsm,pks./max(pks)*max(counts),'sr'); %*numel(x)
+    plot(dmesh,kpd_rescaled./max(pks)*max(counts),'-r','linewidth',2);
+    plot(locsm,pks./max(pks)*max(counts),'sr');
     hold off
-    
-    % figure(4)
-    % plot(dmesh,kpd_rescaled,'-');
-    % hold on
-    % plot(locsm,pks,'sr');
-    % hold off
-    % pause
-    
-    % figure(2)
-    % ksdensity(1./cycles(:,2)*60,'bandwidth',7);
-    % hold on;
-    % kde(1./cycles(:,2)*60,2^8);
-    % kde(1./cycles(:,2)*60,2^6);
-    % kde(1./cycles(:,2)*60,2^4);
-    % hold off
-    
     pause
 end

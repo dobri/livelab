@@ -1,9 +1,5 @@
-function [D,sf,IDS_num,IDS_str] = import_orphx_set_saved_as_dot_tsv()
+function [D,sf,IDS_num,IDS_str] = import_orphx_set_saved_as_dot_tsv(filename,filename_markersids,plotting_flag)
 
-% Move where the data file is, set its name, open it, start reading in
-% parameters.
-cd ~/mcmc/orphx/manalysis/
-filename = 'set0005.tsv';
 delimiter = '\t';
 fileID = fopen(filename,'r');
 paramArray = textscan(fileID, '%s%f', 6, 'Delimiter', delimiter, 'EmptyValue' ,NaN,'HeaderLines', 0, 'ReturnOnError', false, 'EndOfLine', '\r\n');
@@ -38,11 +34,12 @@ if size(D,3)~=numel(col_names)
 end
 
 % Visually inspect the whole audience.
-if 0
+if plotting_flag == 1
+    figure(1)
     if 0
         for pp=1:size(D,3)
             plot3(D(1:1e2:end,1,pp),D(1:1e2:end,2,pp),D(1:1e2:end,3,pp));
-            text(nanmedian(D(1:1e2:end,1,pp)),nanmedian(D(1:1e2:end,2,pp)),nanmedian(D(1:1e2:end,3,pp))+50,col_names{pp})
+            text(nanmedian(D(1:1e2:end,1,pp)),nanmedian(D(1:1e2:end,2,pp)),nanmedian(D(1:1e2:end,3,pp))+50,num2str(col_names(pp),'%.0f'))
             hold on
         end
         grid on
@@ -64,23 +61,45 @@ if 0
     end
 end
 
-[D,IDS_str,IDS_num] = crop_D_and_labels(D,col_names); 
-% Check labels w/ for r=1:43;fprintf('%4s,%4.0f\n',IDS_str{r},IDS_num(r));end
+% Labels. What do we mean by that? These were alphabet chars that allowed
+% us to identify participants and link them anonymously to other modalities
+% of measurement such as questionnaires and ratings.
+% This will merge redundant markers and then return the first of the two on the head.
+% Makers not associated with an alphanumeric label are not retained. I
+% think there are a couple of these, presumably bad quality recording or left early.
+[IDS_str,IDS_num] = import_subj_marker_labels(filename_markersids);
+[D,IDS_str,IDS_num] = crop_D_and_labels(D,col_names,IDS_str,IDS_num); 
+
+% Compare participant labels and marker numbers with those in Subj_Markers.txt
+for r=1:numel(IDS_str)
+    fprintf('%4s,%4.0f\n',IDS_str{r},IDS_num(r))
+end
+
+if plotting_flag == 1
+    figure(2)
+    for pp=1:size(D,3)
+        plot(D(1:1e2:end,1,pp),D(1:1e2:end,2,pp));
+        text(nanmedian(D(1:1e2:end,1,pp)),nanmedian(D(1:1e2:end,2,pp)),IDS_str{pp})
+        hold on
+    end
+    grid on
+    hold off
+    xlabel('x')
+    ylabel('y')
+end
 
 end
 
 
 %%
-function [D_merged,IDS_str_merged,IDS_num_merged] = crop_D_and_labels(D,col_names)
-
-[IDS_str,IDS_num] = import_subj_marker_labels();
+function [D_merged,IDS_str_merged,IDS_num_merged] = crop_D_and_labels(D,col_names,IDS_str,IDS_num)
 
 IDS_num_merged = zeros(size(IDS_str));
 
 D_merged = zeros(size(D,1),3,size(IDS_num,2));
 for n = 1:size(IDS_num,2)
-    [r,c] = find(col_names==IDS_num{n});
-    if 0
+    [r,~] = find(col_names==IDS_num{n});
+    if 0 % debugging
         for d=1:3
             for rr=1:numel(r)
                 plot(D(:,d,r(rr)))
@@ -92,47 +111,56 @@ for n = 1:size(IDS_num,2)
     end
     % Here's the important tricky part. We merge by simply nan-summing,
     % which assumes that different vectors that stand for the same marker
-    % will complement w/out overlapping each other, where the empty parts
-    % are nans.
-    D_merged(:,:,n) = nansum(D(:,:,r),3);
+    % will complement w/out overlapping each other, the empty parts are nans.
+    % D_merged(:,:,n) = nansum(D(:,:,r),3);
+    D_merged(:,:,n) = nanmean(D(:,:,r),3);
     for d=1:3
         D_merged(D_merged(:,d,n)==0,:,n) = nan;
     end
     IDS_num_merged(n) = col_names(r(1));
+    if 0 % debugging
+        disp(r)
+        disp(IDS_num{n})
+        disp(IDS_num_merged(n))
+        disp(IDS_str{n})
+        disp(col_names(r))
+        
+        plot(D_merged(:,:,n))
+        hold on
+        for rn=1:numel(r)
+            plot(D(:,:,r(rn)),'--','linewidth',2)
+        end
+        hold off
+        pause
+    end
 end
 
 % Find the redundant vectors.
 remove_markers = [];
-c=0;
 for n = 2:size(IDS_num,2)
+    % Assume that labels and matrices are ordered, so only seek contiguous repetitions.
     if strcmp(IDS_str{n-1},IDS_str{n})
-        c = c + 1;
-        if sum(isnan(D_merged(:,1,n-1))) < sum(isnan(D_merged(:,1,n)))
-            remove_markers(c) = n-1;
+        % Remove the marker with more nans.
+        if sum(isnan(D_merged(:,1,n-1))) > sum(isnan(D_merged(:,1,n)))
+            remove_markers = horzcat(remove_markers, n-1);
         else
-            remove_markers(c) = n;
+            remove_markers = horzcat(remove_markers, n);
         end
     end
 end
 
-D_merged(:,:,remove_markers) = [];
-IDS_num_merged(remove_markers)= [];
+keep_markers = find(all((((1:numel(IDS_str))'==remove_markers)==0)'));
+D_merged = D_merged(:,:,keep_markers);
+IDS_num_merged = IDS_num_merged(keep_markers);
 IDS_num_merged = floor(IDS_num_merged./10);
-c=0;
-for n = 1:numel(IDS_str)
-    if ~any(n==remove_markers)
-        c = c+1;
-        IDS_str_merged{c} = IDS_str{n};
-    end
-end
+IDS_str_merged = IDS_str(keep_markers);
+
 end
 
 
 %%
-function [IDS_str,IDS_num] = import_subj_marker_labels()
+function [IDS_str,IDS_num] = import_subj_marker_labels(filename)
 
-% cd ~/mcmc/orphx/manalysis/
-filename = 'Subj_Markers.txt';
 delimiter = ',';
 fileID = fopen(filename, 'r');
 x = textscan(fileID, '%s', 'Delimiter', delimiter, 'EmptyValue', NaN, 'HeaderLines', 0, 'ReturnOnError', false, 'EndOfLine', '\r\n');
