@@ -118,6 +118,29 @@ end
 
 %Check acceleration data. I noticed there are a lot of 0s at the end of most trials...
 %plot(D{1}.A{1}(1,:))
+%This is fine
+
+%Check data - make sure there is no trend that will affect CC analysis
+if plotting_flag ==1
+    for piecei = 1:2
+        for triali=1:8 
+            figure
+            cel=D{piecei}.X_processed(1,:,triali); 
+            vl=D{piecei}.X_processed(2,:,triali);
+            v1=D{piecei}.X_processed(3,:,triali);
+            v2=D{piecei}.X_processed(4,:,triali);
+            plot(cel)
+            hold on
+            plot(vl)
+            hold on
+            plot(v1)
+            hold on
+            plot(v2)
+            pause
+        end
+    end
+end
+
 
 % Now take this variable D over to the mvgc toolbox for gc!
 %save('D','D')
