@@ -5,7 +5,7 @@
 
 % Flag for saving data, figs. Set to 1 if you want this loop to save a
 % spreadsheet of the data. 0 if no
-save_flag=0;
+save_flag=1;
 figs_flag=1;
 save_wcc_fig=1;
 if save_wcc_fig==1
@@ -24,10 +24,10 @@ switch 0
 end
 
 if strcmp(method_flag,'wcc')
-    sr8 = 8; % Hz. After downsampling?
+    sr8 = 8; % Hz (after downsampling)
     sr100 = 100;
-    win_len = 5; % seconds
-    max_lag = 2; % seconds
+    win_len = 5; % 2.25 seconds
+    max_lag = 2; % 1.125 seconds
 end
 num_trials = numel(D{1}.A);
 
@@ -36,7 +36,9 @@ if strcmp(method_flag,'cc_and_gcorder')
         D{2}.X_processed_morder,D{2}.X_detrended_processed_morder];
 end
 
-dataTrajs={'X_clean_processed','X_detrended_processed','A'};
+%dataTrajs={'X_clean_processed','X_detrended_processed','A'};
+%dataTrajs={'X_processed','X_detrended_processed','A'};
+dataTrajs={'X_processed','X_detrended_processed'}; %took out A for now
 
 
 
@@ -44,7 +46,6 @@ dataTrajs={'X_clean_processed','X_detrended_processed','A'};
 counter=0;
 for piecei = 1:numel(D)
     for traji = 1:numel(dataTrajs)
-        counter2=0;
         switch dataTrajs{traji}
             case 'A'
                 sr = sr100;
@@ -54,6 +55,9 @@ for piecei = 1:numel(D)
         
         % Make vector to store correlation coefficients
         cor_vals = [];
+        
+        % Make vector to store lags of the max CCs
+        max_val_l=[];
         
         % increment the counter
         counter = counter+1;
@@ -70,14 +74,13 @@ for piecei = 1:numel(D)
         end
         
         for triali=1:num_trials
-            switch 1
+            switch 1 
                 case 0
                     %salient_points = (30:30:max(t/sr))';
                     salient_points = cumsum(randi(10,10,1)+30-5);
                 case 1
                     % Read a clicktrack from a text file such as the marked labels exported from Audacity.
                     S = readtable(['p' num2str(piecei) 't' num2str(triali) '.txt']);
-                    % S = readtable('p1t1.txt');
                     salient_points = S.Var1;
                     salient_points_markers=S.Var3;
             end
@@ -93,7 +96,7 @@ for piecei = 1:numel(D)
                         for col=1:4
                             if col>row
                                 mcounter = mcounter + 1;
-                                [c,l]=xcov(D{piecei}.(dataTrajs{traji})(row,:,triali),D{piecei}.(dataTrajs{traji})(col,:,triali),morders(counter),'coef'); %only thing I'm not sure about is 'coef' - normalizes the sequence
+                                [c,l]=xcov(D{piecei}.(dataTrajs{traji})(row,:,triali),D{piecei}.(dataTrajs{traji})(col,:,triali),morders(counter),'coef'); %'coef' - normalizes the sequence
                                 cor_vals(mcounter+6*(triali-1),1,piecei)=max(abs(c));
                             end
                         end
@@ -114,6 +117,9 @@ for piecei = 1:numel(D)
                                 end
                                 [wcc,l,t]=corrgram(x,y,maxlag,window,overlap);
                                 cor_vals(fcounter+6*(triali-1),1,piecei)=max(max(abs(wcc)));
+                                [indexR,indexC]=find(abs(wcc)==max(max(abs(wcc)))); %find the lag corresponding to the wcc value
+                                max_val_l(fcounter+6*(triali-1),1,piecei)=indexR;
+                                
                                 if figs_flag
                                     % This makes a pseudo-time vector that
                                     % runs in units of time defined by the
@@ -122,11 +128,11 @@ for piecei = 1:numel(D)
                                     stn = time_interpolate(salient_points,salient_points);
                                     
                                     %corrgram(D{piecei}.(dataTrajs{traji})(row,:,triali),D{piecei}.(dataTrajs{traji})(col,:,triali),maxlag,window,overlap)
-                                    if fcounter ==1
+                                    if fcounter == 1 %I need to do this or else no plot appears
                                         figure
-                                    end
+                                    end 
                                     
-                                    subplot(num_trials,6,fcounter+6*(triali-1))
+                                    subplot(num_trials,6,fcounter+6*(triali-1)) %note to self - change so there is a separate plot for each pair
                                     %imagesc(tn,l,flip(wcc),[-1 1]);colorbar
                                     imagesc(t./sr,l,flip(wcc),[-1 1]);colorbar
                                     xtickangle(30)
@@ -199,7 +205,11 @@ for piecei = 1:numel(D)
         end
         
         label_cc=[dataTrajs{traji},'_',method_flag];
+        label_cc_lags=[dataTrajs{traji},'_',method_flag,'_lag'];
+
         D{piecei}.(label_cc)=cor_vals(:,:,piecei);
+        D{piecei}.(label_cc_lags)=max_val_l(:,:,piecei);
+
     end
 end
 
@@ -208,7 +218,6 @@ if save_wcc_fig == 1
     close all
 end
 
-return
 
 figure
 for p=1:2
@@ -234,14 +243,17 @@ if save_flag==1
     %Position
     
     %Reconfigure cor_vals
-    cor_vals_reconfig=[D{1}.X_clean_processed_wcc;D{2}.X_processed_wcc]; %fix this once I get piece 2 markers
+    cor_vals_reconfig=[D{1}.X_processed_wcc;D{2}.X_processed_wcc]; %fix this once I get piece 2 markers
+    
+    %Reconfigure lags
+    cor_lags_reconfig=[D{1}.X_processed_wcc_lag;D{2}.X_processed_wcc_lag]; %fix this once I get piece 2 markers
     
     %Make vector for pair
     pair=repmat([1:6]',16,1);
     
     %Make vector with the pair names
     pair_names={'cello-viola','cello-v1','cello-v2','viola-v1','viola-v2','v1-v2'}';
-    pair_names=[pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names]
+    pair_names=[pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names];
     
     %Make vector for piece
     piece=repelem([1;2],48);
@@ -262,23 +274,23 @@ if save_flag==1
     condition=[condition1;condition2];
     
     
-    T=table(pair, pair_names, cor_vals_reconfig,condition,trial,trial_collapsed,piece);
-    filename='mada_cc_position.xlsx';
-    T.Properties.VariableNames = {'pair','pair_names', 'wcc', 'condition','trial', 'trial_collapsed','piece'};
+    T=table(pair, pair_names, cor_vals_reconfig,cor_lags_reconfig, condition,trial,trial_collapsed,piece);
+    filename='mada_cc_position_window.xlsx';
+    T.Properties.VariableNames = {'pair','pair_names', 'wcc', 'lag','condition','trial', 'trial_collapsed','piece'};
     writetable(T,filename);
         
     %Detrended
     %Reconfigure cor_vals
     cor_vals_reconfig_detrended=[D{1}.X_detrended_processed_wcc;D{2}.X_detrended_processed_wcc]; 
     T2=table(pair, pair_names, cor_vals_reconfig_detrended,condition,trial,trial_collapsed,piece);
-    filename2='mada_cc_position_detrended.xlsx';
+    filename2='mada_cc_position_detrended_window.xlsx';
     T2.Properties.VariableNames = {'pair','pair_names', 'wcc', 'condition','trial', 'trial_collapsed','piece'};
     writetable(T2,filename2);
     
     %Acceleration
     cor_vals_reconfig_A=[D{1}.A_wcc;D{2}.A_wcc];
     T3=table(pair, pair_names, cor_vals_reconfig_A,condition,trial,trial_collapsed,piece);
-    filename3='mada_cc_A.xlsx';
+    filename3='mada_cc_A_window.xlsx';
     T3.Properties.VariableNames = {'pair','pair_names', 'wcc', 'condition','trial', 'trial_collapsed','piece'};
     writetable(T3,filename3);
     
