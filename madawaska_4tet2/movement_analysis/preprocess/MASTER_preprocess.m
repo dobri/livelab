@@ -21,6 +21,7 @@ for tr = 1:numel(filenames)
     if ~strcmp(computer,'GLNXA64')
         filename=filename.name;
     end
+    
     DATA0{tr} = import_tsv_from_qtm_to_matlab(filename);
 end
 
