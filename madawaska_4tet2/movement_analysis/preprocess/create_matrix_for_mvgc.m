@@ -1,5 +1,13 @@
 function M = create_matrix_for_mvgc(DATA, dataTraj, plotting_flag)
 
+% Added this to be able to handle a different field (i.e. V) where the
+% markers were already reduced. Rotate the dimensions.
+if ismatrix(DATA{1}.(dataTraj))
+    for i=1:length(DATA)
+        DATA{i}.(dataTraj) = permute(DATA{i}.(dataTraj),[1 3 2]);
+    end
+end
+
 % This function takes the processed madawaska body sway data and gets it 
 % in the correct form for the mvgc toolbox
 
@@ -31,13 +39,14 @@ end
 
 %% Optional - plot the matrix to make sure it looks ok 
 if plotting_flag ==1
-
     for i=1:size(M,3) %loop through all 8 trials
         for j=1:size(M,1) % loop through all 4 musicians
             plot(M(j,:,i))
+            hold on
             disp([i, j])
-            pause
         end
+        hold off
+        pause
     end
 end
 

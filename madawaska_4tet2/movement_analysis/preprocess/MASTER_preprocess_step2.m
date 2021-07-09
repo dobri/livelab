@@ -76,8 +76,9 @@ for i = 1:numel(DATA1)
     DATA1{i}.X_clean=DATA1{i}.X;
 end
 
-%DATA1=DATA(1:8);
-%DATA2=DATA(9:16);
+%% PCA. This will also select only head markers and reduce to their mean.
+DATA1 = pca_all_trials_in_DATA(DATA1);
+DATA2 = pca_all_trials_in_DATA(DATA2);
 
 %% Now prepare data for gc analysis 
 
@@ -90,6 +91,10 @@ for i = 1:length(dataTrajs)
     DATA1=prepare_data_for_mvgc(DATA1,dataTrajs{i},headMark,plotting_flag);
     DATA2=prepare_data_for_mvgc(DATA2,dataTrajs{i},headMark,plotting_flag);
 end
+DATA1 = prepare_data_for_mvgc_simpler(DATA1, 'V', [], 1);
+DATA2 = prepare_data_for_mvgc_simpler(DATA2, 'V', [], 1);
+DATA1 = prepare_data_for_mvgc_simpler(DATA1, 'Xpcs', 1, 1);
+DATA2 = prepare_data_for_mvgc_simpler(DATA2, 'Xpcs', 1, 1);
 
 % Our DATA variables have new structs called X_processed and
 % X_detrended_processed, which correspond to the anterior-posterior body 
@@ -101,6 +106,11 @@ for i = 1:length(dataTrajs)
   D{1}.(dataTrajs{i})=create_matrix_for_mvgc(DATA1, dataTrajs{i}, plotting_flag);
   D{2}.(dataTrajs{i})=create_matrix_for_mvgc(DATA2, dataTrajs{i}, plotting_flag);
 end
+
+D{1}.V_processed = create_matrix_for_mvgc(DATA1, 'V_processed', 1);
+D{2}.V_processed = create_matrix_for_mvgc(DATA2, 'V_processed', 1);
+D{1}.Xpcs_processed = create_matrix_for_mvgc(DATA1, 'Xpcs_processed', 1);
+D{2}.Xpcs_processed = create_matrix_for_mvgc(DATA2, 'Xpcs_processed', 1);
 
 % Now we have a NEW data variable called D.
 % There are TWO structs in it corresponding to piece 1 and piece 2

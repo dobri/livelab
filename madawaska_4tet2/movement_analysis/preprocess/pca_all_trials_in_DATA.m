@@ -1,6 +1,4 @@
-% To make the loop easier to write, combine the two pieces in one structure.
-DATAS{1} = DATA1;
-DATAS{2} = DATA2;
+function DATA = pca_all_trials_in_DATA(DATA)
 
 % We want these markers on these bodies.
 bodies_labels = {'violin1','violin2','viola','cello'};
@@ -8,24 +6,23 @@ headMark = {'cellohat0','cellohat1','cellohat2','cellohat3','violahat0','violaha
     'violin1hat0','violin1hat1','violin1hat2','violin1hat3','violin2hat0','violin2hat1','violin2hat2','violin2hat3'};
 
 % Find and average the four head markers per body. Then PCA, and keep some information.
-for piece = 1:2
-    for b = 1:numel(bodies_labels)
-        for tr = 1:numel(DATAS{piece})
-            markerInd = [];
-            for m = 1:numel(headMark)
-                if ~isempty(regexp(headMark{m},[bodies_labels{b} '(\w*)'],'once'))
-                    markerInd = [markerInd find(strcmp(DATAS{piece}{tr}.col_names, headMark{m}))];
-                end
+for b = 1:numel(bodies_labels)
+    for tr = 1:numel(DATA)
+        markerInd = [];
+        for m = 1:numel(headMark)
+            if ~isempty(regexp(headMark{m},[bodies_labels{b} '(\w*)'],'once'))
+                markerInd = [markerInd find(strcmp(DATA{tr}.col_names, headMark{m}))];
             end
-            X = nanmean(DATAS{piece}{tr}.X_clean(:,:,markerInd),3);
-            [P,Xrotated,~,~,r2] = pca(X);
-            DATAS{piece}{tr}.Xpcs(:,:,b) = Xrotated;
-            DATAS{piece}{tr}.r2(:,b) = r2';
-            [~,ind] = max(P,[],2);
-            DATAS{piece}{tr}.dim_mapped_mostly_to(:,b) = ind';
-            fprintf('Piece %1.0f, trial %1.0f, body: %8s, R2 per PC: %5.2f%%, %5.2f%%, %5.2f%%. Which dims: %1.f, %1.f, %1.f.\n',piece,tr,bodies_labels{b},r2,ind)
         end
-        %{
+        X = nanmean(DATA{tr}.X_clean(:,:,markerInd),3);
+        [P,Xrotated,~,~,r2] = pca(X);
+        DATA{tr}.Xpcs(:,:,b) = Xrotated;
+        DATA{tr}.r2(:,b) = r2';
+        [~,ind] = max(P,[],2);
+        DATA{tr}.dim_mapped_mostly_to(:,b) = ind';
+        fprintf('Trial %1.0f, body: %8s, R2 per PC: %5.2f%%, %5.2f%%, %5.2f%%. Which dims: %1.f, %1.f, %1.f.\n',tr,bodies_labels{b},r2,ind)
+    end
+    %{
             Inspect P to see which dimensions of X go where after the transformation.
             Column n of P tells you how much the dimensions of the original
             data are mapped to dimension n after PCA. So if you have three
@@ -49,7 +46,5 @@ for piece = 1:2
             of the transformed data by doing matrix multiplication with the
             first column of P.
             plot(Xrotated);hold on;plot((P(:,1)'*(X-mean(X))')','o');hold off
-        %}
-    end
+    %}
 end
-
