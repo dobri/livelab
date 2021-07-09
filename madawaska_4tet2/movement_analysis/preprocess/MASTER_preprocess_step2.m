@@ -125,10 +125,10 @@ if plotting_flag ==1
     for piecei = 1:2
         for triali=1:8 
             figure
-            cel=D{piecei}.X_processed(1,:,triali); 
-            vl=D{piecei}.X_processed(2,:,triali);
-            v1=D{piecei}.X_processed(3,:,triali);
-            v2=D{piecei}.X_processed(4,:,triali);
+            cel=D{piecei}.X_clean_processed(1,:,triali); 
+            vl=D{piecei}.X_clean_processed(2,:,triali);
+            v1=D{piecei}.X_clean_processed(3,:,triali);
+            v2=D{piecei}.X_clean_processed(4,:,triali);
             plot(cel)
             hold on
             plot(vl)
