@@ -16,7 +16,7 @@ save_flag=0;
 
 % Get fieldnames
 %dataTrajs=fieldnames(D{1})';
-dataTrajs={'X_processed','X_detrended_processed'};
+dataTrajs={'X_clean_processed','X_detrended_processed','V_processed','Xpcs_processed'};
 
 for piecei = 1:numel(D)
     
@@ -187,78 +187,90 @@ end
 
 save('D','D')
 
+%%Plot data
+%I'm way better in R than MATLAB...
+
 %% Save data
 if save_flag == 1 %Right now this only outputs the X_processed trajectory, not
 %the X_detrended_processed. **NEED TO ADD A LOOP HERE FOR
 %X_detrended_processed!**
-                
-	% Make table of the raw gc scores for each pair, the p-val for each 
-    % pair, and the permutation-based p-value 
+    dataTrajs={'X_clean_processed_gc','X_detrended_processed_gc','V_processed_gc','Xpcs_processed_gc'};
     
-	GCdata_reconfig1=[];
-	GCdata_reconfig2=[];
-    
-    pval_reconfig1=[];
-    pval_reconfig2=[];
+	for traji = 1:numel(dataTrajs)                
+        % Make table of the raw gc scores for each pair, the p-val for each 
+        % pair, and the permutation-based p-value 
 
-	pval_p_reconfig1=[];
-	pval_p_reconfig2=[];
+        GCdata_reconfig1=[];
+        GCdata_reconfig2=[];
 
-	for piecei = 1:numel(D)
-        for zz=1:size(D{1}.X_processed_gc,3)
-            for yy=1:size(D{1}.X_processed_gc,2)
-                for xx=1:size(D{1}.X_processed_gc,1)
-                    if piecei==1
-                        GCdata_reconfig1=[GCdata_reconfig1,D{piecei}.X_processed_gc(xx,yy,zz)];
-                        pval_reconfig1=[pval_reconfig1, D{piecei}.X_processed_pval(xx,yy,zz)];
-                        pval_p_reconfig1=[pval_p_reconfig1, D{piecei}.X_processed_pval_p(xx,yy,zz)];
+        pval_reconfig1=[];
+        pval_reconfig2=[];
 
-                    else
-                        GCdata_reconfig2=[GCdata_reconfig2,D{piecei}.X_processed_gc(xx,yy,zz)];
-                        pval_reconfig2=[pval_reconfig2, D{piecei}.X_processed_pval(xx,yy,zz)];
-                        pval_p_reconfig2=[pval_p_reconfig2, D{piecei}.X_processed_pval_p(xx,yy,zz)];                       
+        pval_p_reconfig1=[];
+        pval_p_reconfig2=[];
+        
+        % Define pval and pval_p variable names
+        pval=[dataTrajs{traji}];
+        pval=pval(1:end-2);
+        pval=[pval,'pval'];
+        pval_p=[pval,'_p'];
+
+        for piecei = 1:numel(D)
+            for zz=1:size(D{1}.(dataTrajs{traji}),3)
+                for yy=1:size(D{1}.(dataTrajs{traji}),2)
+                    for xx=1:size(D{1}.(dataTrajs{traji}),1)
+                        if piecei==1
+                            GCdata_reconfig1=[GCdata_reconfig1,D{piecei}.(dataTrajs{traji})(xx,yy,zz)];
+                            pval_reconfig1=[pval_reconfig1, D{piecei}.(pval)(xx,yy,zz)];
+                            pval_p_reconfig1=[pval_p_reconfig1, D{piecei}.(pval_p)(xx,yy,zz)];
+
+                        else
+                            GCdata_reconfig2=[GCdata_reconfig2,D{piecei}.(dataTrajs{traji})(xx,yy,zz)];
+                            pval_reconfig2=[pval_reconfig2, D{piecei}.(pval)(xx,yy,zz)];
+                            pval_p_reconfig2=[pval_p_reconfig2, D{piecei}.(pval_p)(xx,yy,zz)];                       
+                        end
                     end
                 end
             end
         end
-	end
 
-    GCdata_reconfig1=GCdata_reconfig1(~isnan(GCdata_reconfig1))';
-    GCdata_reconfig2=GCdata_reconfig2(~isnan(GCdata_reconfig2))';
-    GCdata_reconfig_all=[GCdata_reconfig1;GCdata_reconfig2];
-    
-    pval_reconfig1=pval_reconfig1(~isnan(pval_reconfig1))';
-    pval_reconfig2=pval_reconfig2(~isnan(pval_reconfig2))';
-    pval_reconfig_all=[pval_reconfig1;pval_reconfig2];
+        GCdata_reconfig1=GCdata_reconfig1(~isnan(GCdata_reconfig1))';
+        GCdata_reconfig2=GCdata_reconfig2(~isnan(GCdata_reconfig2))';
+        GCdata_reconfig_all=[GCdata_reconfig1;GCdata_reconfig2];
 
-    pval_p_reconfig1=pval_p_reconfig1(~isnan(pval_p_reconfig1))';
-    pval_p_reconfig2=pval_p_reconfig2(~isnan(pval_p_reconfig2))';
-    pval_p_reconfig_all=[pval_p_reconfig1;pval_p_reconfig2];
+        pval_reconfig1=pval_reconfig1(~isnan(pval_reconfig1))';
+        pval_reconfig2=pval_reconfig2(~isnan(pval_reconfig2))';
+        pval_reconfig_all=[pval_reconfig1;pval_reconfig2];
 
-    %Make vector correponding to mechanical vs expressive trials
-    condition1=[1+zeros(12,1);2+zeros(12,1);1+zeros(12,1);2+zeros(12,1);...
-        1+zeros(12,1);2+zeros(12,1);1+zeros(12,1);2+zeros(12,1)];
-    condition2=flip(condition1);
-    condition=[condition1;condition2];
+        pval_p_reconfig1=pval_p_reconfig1(~isnan(pval_p_reconfig1))';
+        pval_p_reconfig2=pval_p_reconfig2(~isnan(pval_p_reconfig2))';
+        pval_p_reconfig_all=[pval_p_reconfig1;pval_p_reconfig2];
 
-    %Make vector for time (trial)
-    trial=[1+zeros(12,1);2+zeros(12,1);3+zeros(12,1);4+zeros(12,1);...
-        5+zeros(12,1);6+zeros(12,1);7+zeros(12,1);8+zeros(12,1);];
-    trial=repmat(trial,2,1);
+        %Make vector correponding to mechanical vs expressive trials
+        condition1=[1+zeros(12,1);2+zeros(12,1);1+zeros(12,1);2+zeros(12,1);...
+            1+zeros(12,1);2+zeros(12,1);1+zeros(12,1);2+zeros(12,1)];
+        condition2=flip(condition1);
+        condition=[condition1;condition2];
 
-    %Make vector for time collapsed across mechnical vs. expressive
-    trial_collapsed = repmat(repelem([1:4]',24),2,1);
+        %Make vector for time (trial)
+        trial=[1+zeros(12,1);2+zeros(12,1);3+zeros(12,1);4+zeros(12,1);...
+            5+zeros(12,1);6+zeros(12,1);7+zeros(12,1);8+zeros(12,1);];
+        trial=repmat(trial,2,1);
 
-    %Make vector for piece
-    piece=repelem([1;2],96);
+        %Make vector for time collapsed across mechnical vs. expressive
+        trial_collapsed = repmat(repelem([1:4]',24),2,1);
 
-    %Make vector for pair
-    pair=repmat([1:12]',16,1);
+        %Make vector for piece
+        piece=repelem([1;2],96);
 
-    T=table(pair,GCdata_reconfig_all, condition, trial, trial_collapsed, piece, pval_reconfig_all, pval_p_reconfig_all);
-    T.Properties.VariableNames = {'pair','gc', 'condition','trial', 'trial_collapsed','piece','pval','pval_permut'};
-    filename='mada_gc_v4.xlsx';
-    writetable(T,filename);
+        %Make vector for pair
+        pair=repmat([1:12]',16,1);
+
+        T=table(pair,GCdata_reconfig_all, condition, trial, trial_collapsed, piece, pval_reconfig_all, pval_p_reconfig_all);
+        T.Properties.VariableNames = {'pair','gc', 'condition','trial', 'trial_collapsed','piece','pval','pval_permut'};
+        filename=[dataTrajs{traji},'.xlsx'];
+        writetable(T,filename);
+    end
 end
 
 
