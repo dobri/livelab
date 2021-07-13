@@ -3,7 +3,7 @@ function DATA = prepare_data_for_mvgc(DATA, dataTraj, headMark, plotting_flag)
 % This function contains several preprocessing steps for the madawaska data
 % The input DATA is all the ensemble data for the madawaska quartet
 % The input dataTraj is the data you would like to process (e.g. X,
-% X_detrended, the_trend, V, etc.
+% X_detrended, the_trend, V, etc.)
 % The input headMark is a cell list of all the markers we want to analyze
 % If you want to plot the downsampling, set plotting_flag=1. If not, set it to 0.
 
@@ -88,9 +88,12 @@ for triali=1:length(DATA)
 
     % now take out just the anterior-posterior body sway
     data_AP=data_avg(:,2,:);
+    data_ML=data_avg(:,1,:);
     
     % put processed data in a new field
-    label=[dataTraj,'_processed'];
-    DATA{triali}.(label)=data_AP;
+    label_ap=[dataTraj,'_processed'];
+    label_ml=[dataTraj,'_ml_processed'];
+    DATA{triali}.(label_ap)=data_AP;
+    DATA{triali}.(label_ml)=data_ML;
 end
 

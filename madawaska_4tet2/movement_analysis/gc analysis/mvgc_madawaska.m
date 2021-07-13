@@ -16,7 +16,7 @@ save_flag=0;
 
 % Get fieldnames
 %dataTrajs=fieldnames(D{1})';
-dataTrajs={'X_clean_processed','X_detrended_processed','V_processed','Xpcs_processed'};
+dataTrajs={'X_clean_processed','X_detrended_processed','X_clean_ml_processed','V_processed','A_processed','Xpcs_processed'};
 
 for piecei = 1:numel(D)
     
@@ -185,16 +185,15 @@ end
 %values for each pair. These variables were also created for X_detrended
 %for each piece
 
-save('D','D')
+%save('D','D')
 
 %%Plot data
 %I'm way better in R than MATLAB...
 
 %% Save data
-if save_flag == 1 %Right now this only outputs the X_processed trajectory, not
-%the X_detrended_processed. **NEED TO ADD A LOOP HERE FOR
-%X_detrended_processed!**
-    dataTrajs={'X_clean_processed_gc','X_detrended_processed_gc','V_processed_gc','Xpcs_processed_gc'};
+if save_flag == 1 
+    
+    dataTrajs={'X_clean_processed_gc','X_detrended_processed_gc','X_clean_ml_processed_gc','V_processed_gc','A_processed_gc','Xpcs_processed_gc'};
     
 	for traji = 1:numel(dataTrajs)                
         % Make table of the raw gc scores for each pair, the p-val for each 

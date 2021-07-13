@@ -95,42 +95,33 @@ DATA1 = prepare_data_for_mvgc_simpler(DATA1, 'V', [], 1);
 DATA2 = prepare_data_for_mvgc_simpler(DATA2, 'V', [], 1);
 DATA1 = prepare_data_for_mvgc_simpler(DATA1, 'Xpcs', 1, 1);
 DATA2 = prepare_data_for_mvgc_simpler(DATA2, 'Xpcs', 1, 1);
+DATA1 = prepare_data_for_mvgc_simpler(DATA1, 'A', 1, 1);
+DATA2 = prepare_data_for_mvgc_simpler(DATA2, 'A', 1, 1);
 
 % Our DATA variables have new structs called X_processed and
 % X_detrended_processed, which correspond to the anterior-posterior body 
 % sway of the 4 musicians in each of these trajectories.
 
 % Get the data into a matrix form for the MVGC toolbox
-dataTrajs={'X_clean_processed','X_detrended_processed'};
+dataTrajs={'X_clean_processed','X_clean_ml_processed','X_detrended_processed'...
+    'V_processed','Xpcs_processed','A_processed'};
 for i = 1:length(dataTrajs)
   D{1}.(dataTrajs{i})=create_matrix_for_mvgc(DATA1, dataTrajs{i}, plotting_flag);
   D{2}.(dataTrajs{i})=create_matrix_for_mvgc(DATA2, dataTrajs{i}, plotting_flag);
 end
-
-D{1}.V_processed = create_matrix_for_mvgc(DATA1, 'V_processed', 1);
-D{2}.V_processed = create_matrix_for_mvgc(DATA2, 'V_processed', 1);
-D{1}.Xpcs_processed = create_matrix_for_mvgc(DATA1, 'Xpcs_processed', 1);
-D{2}.Xpcs_processed = create_matrix_for_mvgc(DATA2, 'Xpcs_processed', 1);
 
 % Now we have a NEW data variable called D.
 % There are TWO structs in it corresponding to piece 1 and piece 2
 % WIthin these structs, we have a matrix for mvgc for each of our two
 % data trajectories, including X and X_detrended
 
-
-% Add acceleration data into 'D'
-for i = 1:length(DATA1)
-    A1{i}=permute(DATA1{i}.A, [2,1]);
-    D{1}.A=A1;
-    A2{i}=permute(DATA2{i}.A, [2,1]);
-    D{2}.A=A2;
-end
-
 %Check acceleration data. I noticed there are a lot of 0s at the end of most trials...
 %plot(D{1}.A{1}(1,:))
 %This is fine
 
 %Check data - make sure there is no trend that will affect CC analysis
+% In these plots, cello is blue, viola is red, v1 is
+%yellow, v2 is purple
 if plotting_flag ==1
     for piecei = 1:2
         for triali=1:8 
@@ -150,7 +141,6 @@ if plotting_flag ==1
         end
     end
 end
-
 
 % Now take this variable D over to the mvgc toolbox for gc!
 %save('D','D')
