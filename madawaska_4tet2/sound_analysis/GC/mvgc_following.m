@@ -19,7 +19,7 @@ save_flag = 1; % Set to 1 if you want this loop to save a spreadsheet. If not, s
 
 
 %% Read in the data
-load('D.mat');
+%load('D.mat');
 
 % Get fieldnames
 %field_names = fieldnames(D{1}.);
