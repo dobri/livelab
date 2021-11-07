@@ -15,8 +15,8 @@ addpath(genpath('~/Desktop/MATLAB/toolboxes/mvgc_v1.0'))
 save_flag=0;
 
 % Get fieldnames
-%dataTrajs=fieldnames(D{1})';
-dataTrajs={'X_clean_processed','X_detrended_processed','X_clean_ml_processed','V_processed','A_processed','Xpcs_processed'};
+%dataTrajs={'X_clean_processed','X_detrended_processed','X_clean_ml_processed','V_processed','A_processed','Xpcs_processed'};
+dataTrajs={'X_detrended_ml_processed'};
 
 for piecei = 1:numel(D)
     
@@ -193,7 +193,7 @@ end
 %% Save data
 if save_flag == 1 
     
-    dataTrajs={'X_clean_processed_gc','X_detrended_processed_gc','X_clean_ml_processed_gc','V_processed_gc','A_processed_gc','Xpcs_processed_gc'};
+    dataTrajs={'X_clean_processed_gc','X_detrended_processed_gc','X_clean_ml_processed_gc','X_detrended_ml_processed_gc','V_processed_gc','A_processed_gc','Xpcs_processed_gc'};
     
 	for traji = 1:numel(dataTrajs)                
         % Make table of the raw gc scores for each pair, the p-val for each 
@@ -263,10 +263,15 @@ if save_flag == 1
         piece=repelem([1;2],96);
 
         %Make vector for pair
+        pair_names={'cello-viola','cello-v1','cello-v2','viola-cello','viola-v1','viola-v2','v1-cello','v1-viola','v1-v2','v2-cello','v2-viola','v2-v1'}';
+        pair_names=[pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;];
         pair=repmat([1:12]',16,1);
+        
+        leader={'fl','fl','fl','fl','fl','fl','lf','lf','lf','fl','fl','fl'}';
+        leader=[leader;leader;leader;leader;leader;leader;leader;leader;leader;leader;leader;leader;leader;leader;leader;leader];
 
-        T=table(pair,GCdata_reconfig_all, condition, trial, trial_collapsed, piece, pval_reconfig_all, pval_p_reconfig_all);
-        T.Properties.VariableNames = {'pair','gc', 'condition','trial', 'trial_collapsed','piece','pval','pval_permut'};
+        T=table(pair,pair_names,leader,GCdata_reconfig_all, condition, trial, trial_collapsed, piece, pval_reconfig_all, pval_p_reconfig_all);
+        T.Properties.VariableNames = {'pair','pairname','direction','gc', 'condition','trial', 'trial_collapsed','piece','pval','pval_permut'};
         filename=[dataTrajs{traji},'.xlsx'];
         writetable(T,filename);
     end

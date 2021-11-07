@@ -4,7 +4,7 @@
 bodies_labels = {'violin1','violin2','viola','cello'};
 headMark = {'cellohat0','cellohat1','cellohat2','cellohat3','violahat0','violahat1','violahat2','violahat3',...
     'violin1hat0','violin1hat1','violin1hat2','violin1hat3','violin2hat0','violin2hat1','violin2hat2','violin2hat3'};
-plotting_flag=1;
+plotting_flag=0;
 
 % load the first datafile
 load('DATA_piece1.mat');
@@ -104,7 +104,7 @@ DATA2 = prepare_data_for_mvgc_simpler(DATA2, 'A', 1, 1);
 
 % Get the data into a matrix form for the MVGC toolbox
 dataTrajs={'X_clean_processed','X_clean_ml_processed','X_detrended_processed'...
-    'V_processed','Xpcs_processed','A_processed'};
+    'X_detrended_ml_processed','V_processed','Xpcs_processed','A_processed'};
 for i = 1:length(dataTrajs)
   D{1}.(dataTrajs{i})=create_matrix_for_mvgc(DATA1, dataTrajs{i}, plotting_flag);
   D{2}.(dataTrajs{i})=create_matrix_for_mvgc(DATA2, dataTrajs{i}, plotting_flag);
