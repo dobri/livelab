@@ -122,7 +122,7 @@ end
 %Check data - make sure there is no trend that will affect CC analysis
 % In these plots, cello is blue, viola is red, v1 is
 %yellow, v2 is purple
-if plotting_flag ==1
+if plotting_flag == 1
     for piecei = 1:2
         for triali=1:8 
             figure

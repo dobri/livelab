@@ -24,24 +24,28 @@ switch 0
 end
 
 if strcmp(method_flag,'wcc')
-    sr8 = 8; % Hz. After downsampling?
+    sr8 = 8; % Hz (after downsampling)  
     sr100 = 100;
-    win_len = 5; % seconds
-    max_lag = 2; % seconds
+    win_len = [4.4, 3]; %in seconds
+    max_lag = [.55,.75]; % value of beat (quarter note in piece 1, dotted quarter in piece 2)
 end
-num_trials = size(D{1}.X_processed,3);
+num_trials = size(D{1}.X_clean_processed,3);
 
-if strcmp(method_flag,'cc_and_gcorder')
+if strcmp(method_flag,'cc_and_gcorder') %fix
     morders=[D{1}.X_processed_morder,D{1}.X_detrended_processed_morder,...
         D{2}.X_processed_morder,D{2}.X_detrended_processed_morder];
 end
 
-dataTrajs={'X_processed','X_detrended_processed'};
+%dataTrajs={'X_clean_processed','X_detrended_processed','V_processed',...
+%    'Xpcs_processed','A_processed','X_clean_ml_processed','X_detrended_ml_processed'}; 
+
+dataTrajs={'X_clean_processed','X_detrended_processed','V_processed','Xpcs_processed','A_processed','X_clean_ml_processed'}; 
 
 %% CC analysis - position data
 counter=0;
 for piecei = 1:numel(D)
     for traji = 1:numel(dataTrajs)
+        %sr = sr8;
         switch dataTrajs{traji}
             case 'A'
                 sr = sr100;
@@ -49,11 +53,13 @@ for piecei = 1:numel(D)
                 sr = sr8;
         end
         
-        % Preallocate vector to store correlation coefficients
-        % cor_vals=zeros(6*size(D{piecei}.(dataTrajs{traji}),3),1,numel(D)); % there's something weird here.
+        % Make vector to store correlation coefficients
         cor_vals = [];
         
-        % Specify the same parameters that Andrew used
+        % Make vector to store lags of the max CCs
+        max_val_l=[];
+        
+        % increment the counter
         counter = counter+1;
         
         switch method_flag
@@ -62,21 +68,21 @@ for piecei = 1:numel(D)
                 window=length(D{piecei}.(dataTrajs{traji})); %Whole length of the piece.
                 overlap=0; %No overlap
             case 'wcc'
-                maxlag=round(max_lag*sr); % 2 seconds
-                window=round(win_len*sr); % 5 seconds
+                maxlag=round(max_lag*sr);  
+                window=round(win_len*sr); 
                 overlap=round(window/2); % half a window overlap
         end
         
         for triali=1:num_trials
-            switch 1
+            switch 1 
                 case 0
                     %salient_points = (30:30:max(t/sr))';
                     salient_points = cumsum(randi(10,10,1)+30-5);
                 case 1
                     % Read a clicktrack from a text file such as the marked labels exported from Audacity.
                     S = readtable(['p' num2str(piecei) 't' num2str(triali) '.txt']);
-                    % S = readtable('p1t1.txt');
                     salient_points = S.Var1;
+                    salient_points_markers=S.Var3;
             end
             
             %take the maximum unsigned CC coefficient for each of the 6 possible
@@ -90,7 +96,7 @@ for piecei = 1:numel(D)
                         for col=1:4
                             if col>row
                                 mcounter = mcounter + 1;
-                                [c,l]=xcov(D{piecei}.(dataTrajs{traji})(row,:,triali),D{piecei}.(dataTrajs{traji})(col,:,triali),morders(counter),'coef'); %only thing I'm not sure about is 'coef' - normalizes the sequence
+                                [c,l]=xcov(D{piecei}.(dataTrajs{traji})(row,:,triali),D{piecei}.(dataTrajs{traji})(col,:,triali),morders(counter),'coef'); %'coef' - normalizes the sequence
                                 cor_vals(mcounter+6*(triali-1),1,piecei)=max(abs(c));
                             end
                         end
@@ -102,15 +108,27 @@ for piecei = 1:numel(D)
                         for col=1:4
                             if col>row
                                 fcounter = fcounter + 1;
-                                if traji==3
-                                    x = D{piecei}.A{triali}(row,:)';
-                                    y = D{piecei}.A{triali}(col,:)';
-                                else
+                                %if traji==3
+                                   % x = D{piecei}.A{triali}(row,:)';
+                                   % y = D{piecei}.A{triali}(col,:)';
+                                %else
                                     x = D{piecei}.(dataTrajs{traji})(row,:,triali);
                                     y = D{piecei}.(dataTrajs{traji})(col,:,triali);
-                                end
-                                [wcc,l,t]=corrgram(x,y,maxlag,window,overlap);
-                                cor_vals(fcounter+6*(triali-1),1,piecei)=max(max(abs(wcc)));
+                                %end
+                                [wcc,l,t]=corrgram(x,y,maxlag(piecei),window(piecei),overlap(piecei)); %t is all the windows across x and y. Equal to (N (i.e., length x and y)-overlap) / window-overlap
+                                cor_vals(fcounter+6*(triali-1),1,piecei)=mean(max(abs(wcc))); %take max of each window, then average these across the piece
+                                [indexR,indexC]=find(abs(wcc)==max(abs(wcc))); %find the lags corresponding to the max wcc values
+                                max_val_l(fcounter+6*(triali-1),1,piecei)=mean(l(indexR)); %take average of these lags
+                                %x = x';
+                                %t = (1:size(x))'/sr;
+                                %figure
+                                %plot(t,x)                            
+                                %steps = (0:win_len:max(t));
+                                %line([steps;steps],[steps*0+min(x);steps*0+max(x)],'color','k')   
+                                %figure
+                                %plot(t,[x,y'])
+                                %line([steps;steps],[steps*0+min(x);steps*0+max(x)],'color','k')
+                                
                                 if figs_flag
                                     % This makes a pseudo-time vector that
                                     % runs in units of time defined by the
@@ -119,7 +137,11 @@ for piecei = 1:numel(D)
                                     stn = time_interpolate(salient_points,salient_points);
                                     
                                     %corrgram(D{piecei}.(dataTrajs{traji})(row,:,triali),D{piecei}.(dataTrajs{traji})(col,:,triali),maxlag,window,overlap)
-                                    subplot(num_trials,6,fcounter+6*(triali-1))
+                                    if fcounter == 1 %I need to do this or else no plot appears
+                                        figure
+                                    end 
+                                    
+                                    subplot(num_trials,6,fcounter+6*(triali-1)) %note to self - change so there is a separate plot for each pair
                                     %imagesc(tn,l,flip(wcc),[-1 1]);colorbar
                                     imagesc(t./sr,l,flip(wcc),[-1 1]);colorbar
                                     xtickangle(30)
@@ -147,7 +169,28 @@ for piecei = 1:numel(D)
                                     %    xlabel('Time [seconds or sections]')
                                     %end
                                     if triali==1
-                                        title(['Pair ' num2str(row) '-' num2str(col)])
+                                        if row==1
+                                            row_lab='cello';
+                                        elseif row==2
+                                            row_lab='viola';
+                                        elseif row==3
+                                            row_lab='violin1';
+                                        else
+                                            row_lab='violin2';
+                                        end
+                                        
+                                        if col==1
+                                            col_lab='cello';
+                                        elseif col==2
+                                            col_lab='viola';
+                                        elseif col==3
+                                            col_lab='violin1';
+                                        else
+                                            col_lab='violin2';
+                                        end
+                                        %title(['Pair ' num2str(row) '-' num2str(col)])
+                                        title([row_lab '-' col_lab])
+
                                     else
                                         title('')
                                     end
@@ -171,7 +214,11 @@ for piecei = 1:numel(D)
         end
         
         label_cc=[dataTrajs{traji},'_',method_flag];
+        label_cc_lags=[dataTrajs{traji},'_',method_flag,'_lag'];
+
         D{piecei}.(label_cc)=cor_vals(:,:,piecei);
+        D{piecei}.(label_cc_lags)=max_val_l(:,:,piecei);
+
     end
 end
 
@@ -180,89 +227,15 @@ if save_wcc_fig == 1
     close all
 end
 
-return
 
 figure
 for p=1:2
     subplot(2,2,1+(p-1)*2)
-    boxplot(D{p}.X_processed_wcc,reshape(meshgrid(1:8,1:6),1,[])')
+    boxplot(D{p}.X_clean_processed_wcc,reshape(meshgrid(1:8,1:6),1,[])')
     subplot(2,2,2+(p-1)*2)
-    boxplot(D{p}.X_detrended_processed_wcc,reshape(meshgrid(1:8,1:6),1,[])')
+    boxplot(D{p}.X_clean_ml_processed_wcc,reshape(meshgrid(1:8,1:6),1,[])')
 end
 
-%% CC Analysis - acceleration data
-counter=0;
-for piecei = 1:numel(D)
-    % Preallocate vector to store correlation coefficients
-    cor_vals=zeros(6*size(D{piecei}.A,2),1,numel(D));
-    
-    % Specify the same parameters that Andrew used
-    counter=counter+1;
-    
-    switch method_flag
-        case 'cc_and_gcorder'
-            maxlag = morders(counter); %lag is the same as the model order for gc
-            window=length(D{piecei}.A); %Whole length of the piece. Dobri suggests not to use this. Will discuss.
-            overlap=0; %No overlap
-        case 'wcc'
-            sr = 100; % Hz.
-            maxlag=round(max_lag*sr); % 2 seconds
-            window=round(win_len*sr); % 5 seconds
-            overlap=round(window/5); % half a window overlap
-    end
-    
-    for triali=1:size(D{piecei}.A,2)
-        %take the maximum unsigned CC coefficient for each of the 6 possible
-        %pairs of musicians for each trial
-        switch method_flag
-            case 'cc_and_gcorder'
-                % lag is the same as the model order for gc
-                % single trial-long window
-                mcounter = 0;
-                for row=1:4
-                    for col=1:4
-                        if col>row
-                            mcounter = mcounter + 1;
-                            [c,l]=xcov(D{piecei}.A(row,:,triali),D{piecei}.A(col,:,triali),morders(counter),'coef'); %only thing I'm not sure about is 'coef' - normalizes the sequence
-                            cor_vals(mcounter+6*(triali-1),1,piecei)=max(abs(c));
-                        end
-                    end
-                end
-            case 'wcc'
-                % max(A,[],'all') works from R2018b after.
-                fcounter = 0;
-                for row=1:4
-                    for col=1:4
-                        if col>row
-                            fcounter = fcounter + 1;
-                            [wcc,l,t]=corrgram(D{piecei}.A{triali}(row,:),D{piecei}.A{triali}(col,:),maxlag,window,overlap);
-                            cor_vals(fcounter+6*(triali-1),1,piecei)=max(max(abs(wcc)));
-                            if figs_flag
-                                subplot(2,3,fcounter)
-                                corrgram(D{piecei}.A{triali}(row,:),D{piecei}.A{triali}(col,:),maxlag,window,overlap)
-                                xtickangle(30)
-                                set(gca,'YTick',l(1:20:end))
-                                set(gca,'YTickLabel',l(1:20:end)./sr)
-                                ylabel('Lag, s')
-                                set(gca,'XTick',t(1:8:end))
-                                set(gca,'XTickLabel',round(t(1:8:end)./sr))
-                                xlabel('Time, s')
-                            end
-                        end
-                    end
-                end
-                if figs_flag
-                    if save_wcc_fig == 1 % print to file
-                        print(gcf,'-dpng','-r100','-loose',['wcc_' 'score' num2str(piecei) '_tr' num2str(triali) '_' datestr(now,'yymmdd-HHMMSS') '.png']);
-                    else
-                        pause % just inspect on the screen
-                    end
-                end
-        end
-    end
-    label_cc=['A_',method_flag];
-    D{piecei}.(label_cc)=cor_vals(:,:,piecei);
-end
 
 figure
 for p=1:2
@@ -274,38 +247,49 @@ end
 %% Save data
 if save_flag==1
     
-    %Reconfigure cor_vals
-    cor_vals_reconfig=[D{1}.X_processed_cc;D{2}.X_processed_cc];
+	dataTrajs={'X_clean_processed_wcc','X_detrended_processed_wcc','X_clean_ml_processed_wcc','V_processed_wcc','A_processed_wcc','Xpcs_processed_wcc'};
     
-    %Make vector for pair
-    pair=repmat([1:6]',16,1);
+    for traji = 1:numel(dataTrajs)     
+
+        %Reconfigure cor_vals
+        cor_vals_reconfig=[D{1}.(dataTrajs{traji});D{2}.(dataTrajs{traji})]; 
+
+        %Reconfigure lags
+        lag_name=[(dataTrajs{traji}),'_lag'];
+        cor_lags_reconfig=[D{1}.(lag_name);D{2}.(lag_name)]; 
+
+        %Make vector for pair
+        pair=repmat([1:6]',16,1);
+
+        %Make vector with the pair names
+        pair_names={'cello-viola','cello-v1','cello-v2','viola-v1','viola-v2','v1-v2'}';
+        pair_names=[pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names;pair_names];
+
+        %Make vector for piece
+        piece=repelem([1;2],48);
+
+        %Make vector for trial
+        trial=[1+zeros(6,1);2+zeros(6,1);3+zeros(6,1);4+zeros(6,1);...
+            5+zeros(6,1);6+zeros(6,1);7+zeros(6,1);8+zeros(6,1);];
+        trial=repmat(trial,2,1);
+
+        %Make vector for trial_collapsed
+        trial_collapsed = repmat(repelem([1:4]',12),2,1);
+
+
+        %Make vector for condition
+        condition1=[1+zeros(6,1);2+zeros(6,1);1+zeros(6,1);2+zeros(6,1);...
+            1+zeros(6,1);2+zeros(6,1);1+zeros(6,1);2+zeros(6,1)];
+        condition2=flip(condition1);
+        condition=[condition1;condition2];
+
+        T=table(pair, pair_names, cor_vals_reconfig,cor_lags_reconfig, condition,trial,trial_collapsed,piece);
+        filename=[dataTrajs{traji},'.xlsx'];
+        T.Properties.VariableNames = {'pair','pair_names', 'wcc', 'lag','condition','trial', 'trial_collapsed','piece'};
+        writetable(T,filename);
+
+    end
     
-    %Make vector for piece
-    piece=repelem([1;2],48);
-    
-    %Make vector for trial
-    trial=[1+zeros(6,1);2+zeros(6,1);3+zeros(6,1);4+zeros(6,1);...
-        5+zeros(6,1);6+zeros(6,1);7+zeros(6,1);8+zeros(6,1);];
-    trial=repmat(trial,2,1);
-    
-    %Make vector for trial_collapsed
-    trial_collapsed = repmat(repelem([1:4]',12),2,1);
-    
-    
-    %Make vector for condition
-    condition1=[1+zeros(6,1);2+zeros(6,1);1+zeros(6,1);2+zeros(6,1);...
-        1+zeros(6,1);2+zeros(6,1);1+zeros(6,1);2+zeros(6,1)];
-    condition2=flip(condition1);
-    condition=[condition1;condition2];
-    
-    
-    T=table(pair, cor_vals_reconfig,condition,trial,trial_collapsed,piece);
-    filename='mada_cc_feb15.xlsx';
-    T.Properties.VariableNames = {'pair','cc', 'condition','trial', 'trial_collapsed','piece'};
-    writetable(T,filename);
-    
-    plot(trial,cor_vals_reconfig)
-    
-    
+
 end
 
