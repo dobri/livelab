@@ -4,7 +4,7 @@ clear
 % i.e. '/media/dobri/disk2/mcmc_large_data/orphx'
 data_path = input('Me: Where is my money?\nYou: ');
 cd(data_path)
-filename = fullfile(data_path,'orphx_set0005.tsv');
+filename = fullfile(data_path,'orphx_set.tsv'); % was called orphx_set0005.tsv.
 filename_markers_ids = fullfile(data_path,'Subj_Markers.txt');
 
 % Set this to visually inspect the multiple stages of data processing.
